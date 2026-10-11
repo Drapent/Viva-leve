@@ -1,15 +1,34 @@
-﻿name: Keep-Alive 24-7 (Non-Sleep)
+name: Keep-Alive 24-7 (Anti-Sleep)
 
 on:
   schedule:
-    # A cada 10 minutos (Render dorme com 15 min de inatividade)
+    # A cada 10 minutos (Render dorme apenas após 15 minutos de inatividade)
     - cron: '*/10 * * * *'
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  ping:
+  anti_sleep:
+    name: Ping Anti-Sleep Render 24/7
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render Health Check
+      - name: Ping Servidor VivaLeve
         run: |
-          curl -sS --fail -m 20 https://viva-leve.onrender.com/health || curl -sS --fail -m 20 https://vivaleve.onrender.com/health || true
+          echo "========================================================"
+          echo "Disparando ping Anti-Sleep para https://viva-leve.onrender.com"
+          echo "========================================================"
+          
+          # Tentativa principal no endpoint /health
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -m 30 https://viva-leve.onrender.com/health || echo "FAIL")
+          echo "Status HTTP retornado: $STATUS"
+          
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Servidor VivaLeve acordado e respondendo normalmente!"
+          else
+            echo "⚠️ Tentando segundo endpoint de contingência (/api/version)..."
+            curl -sS -m 30 https://viva-leve.onrender.com/api/version || true
+          fi
+          
+          echo "Operação Anti-Sleep concluída com sucesso."

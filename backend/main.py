@@ -359,6 +359,15 @@ def get_server_info():
         "name": "VivaLeve"
     }
 
+@app.get("/health")
+@app.get("/api/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "app": "VivaLeve",
+        "timestamp": APP_TIMESTAMP
+    }
+
 @app.get("/api/version")
 def get_app_version():
     return {

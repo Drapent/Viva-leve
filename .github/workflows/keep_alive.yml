@@ -1,0 +1,15 @@
+﻿name: Keep-Alive 24-7 (Non-Sleep)
+
+on:
+  schedule:
+    # A cada 10 minutos (Render dorme com 15 min de inatividade)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Health Check
+        run: |
+          curl -sS --fail -m 20 https://viva-leve.onrender.com/health || curl -sS --fail -m 20 https://vivaleve.onrender.com/health || true

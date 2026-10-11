@@ -1,0 +1,339 @@
+/* VivaLeve - Design Colorido, Alegre, Moderno & Vibrante */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary: #10b981;
+    --primary-gradient: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+    --protein: #f43f5e;
+    --carbs: #f59e0b;
+    --fat: #06b6d4;
+    --water: #3b82f6;
+    --cheat: #ff8c00;
+    --bg-page: #f8fafc;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-page);
+    color: #1e293b;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Modos e Gradientes de Botões Coloridos */
+.btn-primary-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.35);
+}
+.btn-primary-gradient:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 10px 24px -4px rgba(16, 185, 129, 0.45);
+}
+
+.btn-coral-gradient {
+    background: linear-gradient(135deg, #ff6b6b 0%, #fa5252 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px -4px rgba(250, 82, 82, 0.35);
+}
+
+.btn-amber-gradient {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px -4px rgba(245, 158, 11, 0.35);
+}
+
+.btn-purple-gradient {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px -4px rgba(139, 92, 246, 0.35);
+}
+
+.btn-blue-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.35);
+}
+
+/* Cartões Coloridos de Refeições */
+.meal-card-breakfast {
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+    border: 1.5px solid #fef3c7;
+}
+
+.meal-card-lunch {
+    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+    border: 1.5px solid #dcfce7;
+}
+
+.meal-card-snack {
+    background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+    border: 1.5px solid #ffedd5;
+}
+
+.meal-card-dinner {
+    background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+    border: 1.5px solid #f3e8ff;
+}
+
+.meal-card-extra {
+    background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+    border: 1.5px solid #e0f2fe;
+}
+
+/* Macro Bars com Cores Vivas */
+.bar-protein {
+    background: linear-gradient(90deg, #fb7185 0%, #f43f5e 100%);
+}
+
+.bar-carbs {
+    background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.bar-fat {
+    background: linear-gradient(90deg, #38bdf8 0%, #06b6d4 100%);
+}
+
+.bar-water {
+    background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+/* Animações e Transições */
+.fade-in {
+    animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Laser do Scanner */
+.scan-laser {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(16,185,129,0) 0%, #10b981 50%, rgba(16,185,129,0) 100%);
+    box-shadow: 0 0 18px #10b981;
+    animation: scanMove 2s ease-in-out infinite alternate;
+}
+
+@keyframes scanMove {
+    0% { top: 6%; }
+    100% { top: 92%; }
+}
+
+/* Modo Dia do Lixo Ativo */
+body.cheat-mode-active {
+    --primary: #f59e0b;
+}
+
+/* Scrollbars Delicadas */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+/* ========================================================
+   🔥 ANIMAÇÕES DO FOGUINHO / OFENSIVA (DUOLINGO & TIKTOK)
+   ======================================================== */
+@keyframes flamePulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+    }
+    50% {
+        transform: scale(1.12) rotate(-3deg);
+        filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.85));
+    }
+}
+
+@keyframes flameFlicker {
+    0%, 100% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-2px) scale(1.05) rotate(2deg); }
+    75% { transform: translateY(1px) scale(0.98) rotate(-2deg); }
+}
+
+.animate-flame-bounce {
+    display: inline-block;
+    animation: flamePulse 1.8s ease-in-out infinite;
+}
+
+.flame-box-glow {
+    background: radial-gradient(circle at center, rgba(254, 243, 199, 0.8) 0%, rgba(254, 215, 170, 0.3) 70%, transparent 100%);
+}
+
+.flame-day-lit {
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.flame-day-unlit {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px dashed #cbd5e1;
+}
+
+/* ========================================================
+   👑 PÓDIO DA BATALHA FAMILIAR DO DIA DO LIXO
+   ======================================================== */
+.podium-gold {
+    background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 40%, #ffffff 100%);
+    border: 2px solid #f59e0b;
+    box-shadow: 0 12px 30px -6px rgba(245, 158, 11, 0.25);
+}
+
+.podium-silver {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 40%, #ffffff 100%);
+    border: 1.5px solid #94a3b8;
+    box-shadow: 0 8px 24px -4px rgba(148, 163, 184, 0.2);
+}
+
+.podium-bronze {
+    background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 40%, #ffffff 100%);
+    border: 1.5px solid #f97316;
+    box-shadow: 0 8px 24px -4px rgba(249, 115, 22, 0.2);
+}
+
+@keyframes crownBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-4px) rotate(4deg); }
+}
+
+.animate-crown {
+    display: inline-block;
+    animation: crownBounce 2.4s ease-in-out infinite;
+}
+
+/* ========================================================
+   🤖 MASCOTE INTERATIVO "VIVI" & BALÃO DE FALA
+   ======================================================== */
+@keyframes floatGentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.animate-mascot-float {
+    animation: floatGentle 3s ease-in-out infinite;
+}
+
+.speech-bubble {
+    position: relative;
+    background: #ffffff;
+    border: 1.5px solid #d1fae5;
+    box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.15);
+}
+
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: 24px;
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: #ffffff transparent;
+    display: block;
+    width: 0;
+}
+
+.speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: 23px;
+    border-width: 9px 9px 0;
+    border-style: solid;
+    border-color: #d1fae5 transparent;
+    display: block;
+    width: 0;
+}
+
+/* ========================================================
+   🎉 CANVAS DE CONFETES & MISSÕES LÚDICAS
+   ======================================================== */
+#confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.mission-card {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mission-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.15);
+}
+
+/* ========================================================
+   🎯 ONBOARDING WIZARD & MOTOR DE DÉFICIT CALÓRICO
+   ======================================================== */
+.quiz-card-selected {
+    border-color: #10b981 !important;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+    box-shadow: 0 10px 25px -4px rgba(16, 185, 129, 0.25) !important;
+}
+
+.quiz-option-card {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+.quiz-option-card:hover {
+    transform: translateY(-2px);
+    border-color: #a7f3d0;
+}
+
+.quiz-step {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Medidor Circular de Calorias (Gauge Ring) */
+.calorie-gauge-svg {
+    filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.18));
+}
+
+/* ========================================================
+   🍎 SUPORTE IOS & SAFE AREA INSETS (IPHONE / IPAD)
+   ======================================================== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    body {
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    }
+    nav.fixed.bottom-0 {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    }
+    header.sticky.top-0 {
+        padding-top: calc(0.75rem + env(safe-area-inset-top));
+    }
+}
+
+/* Ocultar barra de rolagem horizontal mantendo swipe em carrosséis */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+
+

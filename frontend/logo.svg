@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100" fill="none">
+  <!-- Emblema -->
+  <g transform="translate(10, 10) scale(0.16)">
+    <rect width="512" height="512" rx="140" fill="url(#bgGradL)" />
+    <path d="M150 330 C130 230 180 160 256 160 C256 240 220 330 150 330 Z" fill="#34D399" />
+    <path d="M256 380 C200 380 180 320 200 270 C210 245 230 230 240 200 C250 170 245 140 256 110 C270 145 315 195 315 250 C315 320 295 380 256 380 Z" fill="url(#flameGradL)" />
+    <path d="M256 370 C230 370 220 335 230 305 C235 290 245 280 250 260 C255 240 252 225 256 210 C265 230 290 260 290 295 C290 335 275 370 256 370 Z" fill="#FEF08A" />
+    <path d="M300 270 C300 250 315 235 335 235 C350 235 360 245 365 255 C370 245 380 235 395 235 C415 235 430 250 430 270 C430 300 390 335 365 350 C340 335 300 300 300 270 Z" fill="#FB7185" />
+  </g>
+  <defs>
+    <linearGradient id="bgGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="flameGradL" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#EA580C" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FDE047" />
+    </linearGradient>
+  </defs>
+
+  <!-- Tipografia VivaLeve -->
+  <text x="110" y="55" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="38" font-weight="900" letter-spacing="-1">
+    <tspan fill="#065F46">Viva</tspan><tspan fill="#059669">Leve</tspan>
+  </text>
+  <!-- Chama no Ponto do 'i' ou badge -->
+  <circle cx="148" cy="27" r="5" fill="#F59E0B" />
+
+  <!-- Subtítulo -->
+  <text x="112" y="76" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5" fill="#64748B" text-transform="uppercase">
+    Nutrição • Ofensiva • Vida Leve
+  </text>
+</svg>

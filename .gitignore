@@ -1,0 +1,20 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+cloudflared.exe
+*.log
+logs/
+.system_generated/
+supervisor_status.json
+public_url.txt
+*.lnk
+mingit/
+mingit.zip
+
+# Android build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+.gradle/
+build/

@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VivaLeve - Dieta Inteligente, Dia do Lixo & Restaurantes</title>
+    
+    <!-- PWA & Mobile Meta -->
+    <meta name="theme-color" content="#10b981">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- iOS / Apple Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VivaLeve">
+    <link rel="apple-touch-icon" href="/static/icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icon.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icon.svg">
+    <link rel="apple-touch-startup-image" href="/static/icon.svg">
+    
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+
+    <!-- Tailwind CSS (Local 100% Offline) -->
+    <script src="/static/vendor/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        'primary-dark': '#059669',
+                        cheat: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js & QRCode.js (Locais 100% Offline) -->
+    <script src="/static/vendor/chart.min.js"></script>
+    <script src="/static/vendor/qrcode.min.js"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-gradient-to-b from-slate-50 via-emerald-50/20 to-slate-50 text-slate-800 pb-24 md:pb-12 min-h-screen">
+
+    <!-- Banner de Status Offline / Sincronização -->
+    <div id="offline-status-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-amber-500 text-white text-center py-1.5 px-4 text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all">
+        <span>📴</span>
+        <span id="offline-status-text">Modo Offline Ativo - Seus dados e registros continuam funcionando no aparelho!</span>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Header Superior Colorido e Alegre -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-sm shadow-emerald-500/5 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-2">
+            
+            <!-- Logo Oficial e Usuário -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-amber-400 flex items-center justify-center p-1.5 shadow-md shadow-emerald-500/25">
+                    <img src="/static/icon.svg" alt="VivaLeve Logo" class="w-full h-full object-contain filter drop-shadow">
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-black tracking-tight text-emerald-800 flex items-center gap-1.5">
+                        VivaLeve <span class="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Pro</span>
+                    </h1>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500">
+                        <span id="header-user-name" class="font-bold text-slate-700 truncate max-w-[110px] sm:max-w-none">Carregando...</span>
+                        <span>•</span>
+                        <span id="header-user-goal" class="text-emerald-600 font-bold">Emagrecimento</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação do Header (Foguinho/Streak + Baixar APK + Conta + Data) -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                
+                <!-- 🔥 Botão Foguinho / Ofensiva (Duolingo & TikTok) -->
+                <button onclick="Streak.openModal()" id="btn-streak-flame" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-black text-xs transition border border-amber-300/80 shadow-sm" title="Sua Ofensiva de Dias Consecutivos">
+                    <span class="text-sm sm:text-base animate-flame-bounce">🔥</span>
+                    <span id="streak-counter-badge" class="font-black text-amber-700">0 Dias</span>
+                </button>
+
+                <!-- 📥 Botão Baixar APK Direto -->
+                <a href="/download/apk" download="VivaLeve.apk" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs shadow-md shadow-emerald-500/25 transition-all hover:scale-105" title="Baixar Arquivo VivaLeve.apk">
+                    <span>📥</span>
+                    <span class="hidden md:inline">Baixar APK</span>
+                </a>
+
+                <!-- 📲 Botão Modal Mobile / Live Update -->
+                <button onclick="App.openMobileModal()" class="flex items-center gap-1 px-2 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition" title="Instalar no celular via Wi-Fi / PWA">
+                    <span>📲</span>
+                </button>
+
+                <!-- Botão de Conta / Login -->
+                <button onclick="Auth.openModal()" id="btn-header-auth" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition border border-purple-200/60" title="Gerenciar Conta">
+                    <div id="header-user-avatar" class="w-5 h-5 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold">U</div>
+                    <span class="hidden lg:inline">Conta</span>
+                </button>
+
+                <!-- Navegação de Data Diária -->
+                <div class="flex items-center bg-slate-100 rounded-2xl p-1 shadow-inner text-xs">
+                    <button id="btn-prev-day" class="p-1.5 hover:bg-white rounded-xl transition text-slate-600 font-bold" title="Dia anterior">◀</button>
+                    <button id="btn-today" class="px-2 py-1 font-bold text-emerald-800 hover:text-emerald-600 transition">
+                        <span id="current-date-label">Hoje</span>
+                    </button>
+                    <button id="btn-next-day" class="p-1.5 hover:bg-white rounded-xl transition text-slate-600 font-bold" title="Próximo dia">▶</button>
+                    <input type="date" id="current-date-input" class="sr-only">
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Banner Global do Dia do Lixo (Aparece quando ativo) -->
+    <div id="diary-cheat-banner" class="hidden bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-white px-4 py-3 shadow-md shadow-orange-500/20">
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="text-2xl animate-bounce">🎉</span>
+                <div>
+                    <h4 class="font-black text-sm leading-tight text-white drop-shadow-sm">Modo Dia do Lixo Ativado Hoje!</h4>
+                    <p class="text-xs text-amber-50">Aproveite sua refeição com satisfação consciente. Os avisos de calorias estão relaxados!</p>
+                </div>
+            </div>
+            <button onclick="App.switchTab('dia-lixo')" class="px-3.5 py-1.5 rounded-2xl bg-white text-amber-800 hover:bg-amber-50 text-xs font-black shadow-sm transition">
+                Ver Dicas
+            </button>
+        </div>
+    </div>
+
+    <!-- Container Principal do Conteúdo -->
+    <main class="max-w-4xl mx-auto px-4 py-6">
+
+        <!-- ==================== ABA 1: DIÁRIO ALIMENTAR ==================== -->
+        <section id="tab-diario" class="tab-content">
+            
+            <!-- Resumo Calórico & Metas com Medidor Circular Moderno -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 mb-6">
+                <div class="flex items-center justify-between gap-4 mb-3">
+                    <!-- Gauge Ring Circular SVG -->
+                    <div class="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 flex items-center justify-center">
+                        <svg class="w-full h-full -rotate-90 calorie-gauge-svg" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="9" fill="none" />
+                            <circle id="calorie-gauge-circle" cx="50" cy="50" r="40" 
+                                    stroke="url(#calorieGradient)" stroke-width="9" stroke-linecap="round" fill="none"
+                                    stroke-dasharray="251.2" stroke-dashoffset="251.2"
+                                    class="transition-all duration-700 ease-out" />
+                            <defs>
+                                <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#10b981" />
+                                    <stop offset="100%" stop-color="#06b6d4" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
+                            <span id="gauge-percent" class="text-xs sm:text-sm font-black text-slate-800">0%</span>
+                            <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Meta</span>
+                        </div>
+                    </div>
+
+                    <!-- Dados Numéricos das Calorias -->
+                    <div class="flex-1 flex items-center justify-between gap-3">
+                        <div>
+                            <span class="text-[11px] font-black uppercase tracking-wider text-slate-400">Calorias do Dia</span>
+                            <div class="flex items-baseline gap-1 mt-0.5">
+                                <span id="calories-consumed" class="text-2xl sm:text-4xl font-black text-slate-800">0</span>
+                                <span class="text-slate-400 font-bold text-xs sm:text-sm">/ <span id="calories-target">2000</span> kcal</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[11px] font-black uppercase tracking-wider text-slate-400">Saldo Restante</span>
+                            <div class="text-2xl sm:text-3xl font-black text-emerald-600 mt-0.5">
+                                <span id="calories-remaining">2000</span> <span class="text-xs font-bold">kcal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Progresso Calórico -->
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-5">
+                    <div id="calories-bar-fill" class="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+
+                <!-- Distribuição dos Macronutrientes Coloridos -->
+                <div class="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100">
+                    <!-- Proteína (Rosa / Carmim) -->
+                    <div class="bg-gradient-to-b from-rose-50/70 to-pink-50/40 p-3.5 rounded-2xl border border-rose-100/80">
+                        <div class="flex items-center justify-between mb-1.5 text-xs">
+                            <span class="font-extrabold text-rose-800">🥩 Proteínas</span>
+                            <span class="text-rose-950 font-bold text-[11px]"><b id="protein-consumed">0g</b> / <span id="protein-target">150g</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-rose-200/60 rounded-full overflow-hidden">
+                            <div id="protein-bar-fill" class="h-full bar-protein rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Carboidratos (Dourado / Âmbar) -->
+                    <div class="bg-gradient-to-b from-amber-50/70 to-yellow-50/40 p-3.5 rounded-2xl border border-amber-100/80">
+                        <div class="flex items-center justify-between mb-1.5 text-xs">
+                            <span class="font-extrabold text-amber-800">🍞 Carbos</span>
+                            <span class="text-amber-950 font-bold text-[11px]"><b id="carbs-consumed">0g</b> / <span id="carbs-target">200g</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-amber-200/60 rounded-full overflow-hidden">
+                            <div id="carbs-bar-fill" class="h-full bar-carbs rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gorduras (Turquesa / Ciano) -->
+                    <div class="bg-gradient-to-b from-cyan-50/70 to-sky-50/40 p-3.5 rounded-2xl border border-cyan-100/80">
+                        <div class="flex items-center justify-between mb-1.5 text-xs">
+                            <span class="font-extrabold text-cyan-800">🥑 Gorduras</span>
+                            <span class="text-cyan-950 font-bold text-[11px]"><b id="fat-consumed">0g</b> / <span id="fat-target">60g</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-cyan-200/60 rounded-full overflow-hidden">
+                            <div id="fat-bar-fill" class="h-full bar-fat rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rastreador de Hidratação / Água -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 text-white flex items-center justify-center text-2xl shadow-md shadow-sky-500/25">
+                        💧
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-baseline gap-2">
+                            <h4 class="font-black text-slate-800 text-sm">Hidratação</h4>
+                            <span class="text-xs text-sky-700 font-extrabold"><span id="water-consumed-val">0 ml</span> / <span id="water-target-val" class="text-slate-400 font-medium">2500 ml</span></span>
+                        </div>
+                        <div class="w-36 h-2 bg-slate-100 rounded-full overflow-hidden mt-1.5">
+                            <div id="water-bar-fill" class="h-full bar-water rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button onclick="Diary.addWater(200)" class="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold transition">
+                        +200ml
+                    </button>
+                    <button onclick="Diary.addWater(350)" class="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold transition">
+                        +350ml
+                    </button>
+                    <button onclick="Diary.addWater(500)" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white text-xs font-extrabold shadow-sm shadow-sky-500/25 transition">
+                        +500ml
+                    </button>
+                    <button onclick="Diary.resetWater()" class="p-2 rounded-xl text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition" title="Zerar água">
+                        🔄
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botão de Acesso Rápido ao Scanner por Foto -->
+            <div onclick="App.switchTab('scanner')" class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white rounded-3xl p-4 sm:p-5 shadow-lg shadow-teal-500/20 mb-6 flex items-center justify-between cursor-pointer hover:opacity-95 transition-all group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-inner">
+                        📸
+                    </div>
+                    <div>
+                        <h4 class="font-black text-sm sm:text-base">Escanear Refeição com IA</h4>
+                        <p class="text-xs text-emerald-50">Tire uma foto do seu prato para calcular calorias e macros instantaneamente.</p>
+                    </div>
+                </div>
+                <span class="text-2xl px-2">➔</span>
+            </div>
+
+            <!-- Lista de Refeições do Dia -->
+            <div id="meals-container">
+                <!-- Preenchido dinamicamente via diary.js -->
+            </div>
+        </section>
+
+        <!-- ==================== ABA 2: SCANNER IA POR FOTO ==================== -->
+        <section id="tab-scanner" class="tab-content hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
+                <div class="text-center max-w-md mx-auto mb-6">
+                    <div class="w-14 h-14 bg-gradient-to-tr from-emerald-400 to-teal-500 text-white rounded-3xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-md shadow-emerald-500/25">
+                        📸
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800">Scanner Nutricional por Foto</h2>
+                    <p class="text-xs text-slate-500 mt-1">Tire uma foto do prato ou selecione da sua galeria. A IA do Gemini identifica os alimentos e calcula calorias e macronutrientes.</p>
+                </div>
+
+                <!-- Inputs Nativos de Câmera e Galeria (Total compatibilidade iOS Safari e Android) -->
+                <input type="file" id="camera-file-input" accept="image/*" capture="environment" class="sr-only">
+                <input type="file" id="gallery-file-input" accept="image/*" class="sr-only">
+
+                <!-- Área de Upload / Preview -->
+                <div id="scanner-upload-area" class="border-2 border-dashed border-emerald-200 hover:border-emerald-500 rounded-3xl p-6 text-center transition-all bg-emerald-50/30 mb-6">
+                    
+                    <div id="scanner-placeholder">
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-xs mx-auto mb-4">
+                            <label for="camera-file-input" class="btn-primary-gradient flex-1 py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition hover:scale-105 cursor-pointer shadow-md shadow-emerald-500/20 select-none">
+                                <span>📷</span> Tirar Foto Agora
+                            </label>
+                            <label for="gallery-file-input" class="flex-1 py-3.5 px-4 bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-200 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-sm cursor-pointer select-none">
+                                <span>🖼️</span> Galeria
+                            </label>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-medium">Ou arraste e solte uma imagem da refeição aqui</p>
+
+                        <!-- Atalhos de Teste Instantâneo em 1 Clique -->
+                        <div class="mt-4 pt-3 border-t border-emerald-100">
+                            <span class="text-[11px] font-bold text-slate-500 block mb-2">⚡ Ou teste a IA instantaneamente em 1 clique:</span>
+                            <div class="flex flex-wrap gap-1.5 justify-center">
+                                <button type="button" onclick="Scanner.testWithSample('prato_feito')" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-xl transition shadow-xs">🥗 Prato Feito</button>
+                                <button type="button" onclick="Scanner.testWithSample('omelete')" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-xl transition shadow-xs">🍳 Omelete</button>
+                                <button type="button" onclick="Scanner.testWithSample('salmao')" class="px-3 py-1.5 bg-cyan-100 hover:bg-cyan-200 text-cyan-900 text-xs font-bold rounded-xl transition shadow-xs">🐟 Salmão</button>
+                                <button type="button" onclick="Scanner.testWithSample('acai')" class="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold rounded-xl transition shadow-xs">🥣 Açaí Bowl</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Container de Imagem Selecionada com Laser de Scan -->
+                    <div id="scanner-preview-container" class="hidden relative max-w-sm mx-auto rounded-3xl overflow-hidden shadow-lg border-2 border-emerald-400">
+                        <img id="scanner-preview-img" src="" alt="Refeição" class="w-full h-64 object-cover">
+                        <div id="scanner-laser-bar" class="hidden scan-laser"></div>
+                    </div>
+
+                    <div id="scanner-status-text" class="hidden mt-4"></div>
+                </div>
+
+                <!-- Resultados da Análise -->
+                <div id="scanner-results-section" class="hidden fade-in border-t border-slate-100 pt-6">
+
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black text-emerald-600 uppercase tracking-wider">Identificado pela IA</span>
+                                <span id="scan-engine-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">VivaLeve Vision Turbo AI (0.15s)</span>
+                            </div>
+                            <h3 id="scan-dish-title" class="text-lg font-black text-slate-800">Almoço Saudável</h3>
+                        </div>
+                        <span id="scan-health-badge" class="px-3.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Nota: 9.0/10
+                        </span>
+                    </div>
+
+                    <!-- Resumo dos Macros Estimados -->
+                    <div class="grid grid-cols-4 gap-2 text-center p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl mb-5 border border-emerald-100">
+                        <div>
+                            <span class="text-[10px] text-emerald-700 uppercase font-black">Total Kcal</span>
+                            <div id="scan-total-cal" class="text-base font-black text-emerald-800">0 kcal</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-rose-600 uppercase font-black">Proteína</span>
+                            <div id="scan-total-p" class="text-sm font-black text-rose-800">0g</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-amber-600 uppercase font-black">Carboidrato</span>
+                            <div id="scan-total-c" class="text-sm font-black text-amber-800">0g</div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-cyan-600 uppercase font-black">Gordura</span>
+                            <div id="scan-total-f" class="text-sm font-black text-cyan-800">0g</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Alimentos Detectados -->
+                    <h4 class="font-extrabold text-xs text-slate-700 uppercase tracking-wider mb-2">Ingredientes & Porções Estimadas:</h4>
+                    <div id="scan-items-list" class="space-y-2 mb-4"></div>
+
+                    <!-- Dica Nutricional da IA -->
+                    <div class="p-3.5 bg-emerald-50/70 rounded-2xl text-xs text-emerald-900 border border-emerald-100 mb-6">
+                        <b class="text-emerald-700">💡 Análise do Nutricionista IA:</b>
+                        <p id="scan-feedback-text" class="mt-1 leading-relaxed text-slate-600 font-medium"></p>
+                    </div>
+
+                    <!-- Ação: Adicionar ao Diário -->
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <div class="w-full sm:w-48">
+                            <label class="text-[11px] font-black text-slate-500 uppercase">Adicionar na refeição:</label>
+                            <select id="scan-meal-target-select" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                                <option value="breakfast">☕ Café da Manhã</option>
+                                <option value="lunch" selected>🥗 Almoço</option>
+                                <option value="snack">🍎 Lanche da Tarde</option>
+                                <option value="dinner">🍲 Jantar</option>
+                                <option value="extra">🌙 Ceia / Snacks</option>
+                            </select>
+                        </div>
+                        <button onclick="Scanner.addScanToDiary()" class="btn-primary-gradient w-full sm:flex-1 py-3 px-6 rounded-2xl text-xs font-black shadow-md transition mt-auto hover:scale-105">
+                            ✓ Confirmar e Inserir no Diário
+                        </button>
+                        <button onclick="Scanner.resetScanner()" class="w-full sm:w-auto py-3 px-4 text-slate-400 hover:text-rose-500 text-xs font-bold transition">
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== ABA 3: DIA DO LIXO & BANCO CALÓRICO ==================== -->
+        <section id="tab-dia-lixo" class="tab-content hidden">
+            
+            <!-- Card Principal de Ativação -->
+            <div class="bg-gradient-to-tr from-amber-50 via-orange-50 to-yellow-50 rounded-3xl p-6 border border-amber-200 shadow-sm mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-3xl">🍕</span>
+                        <div>
+                            <h2 class="text-lg font-black text-amber-950">Sistema do Dia do Lixo</h2>
+                            <p class="text-xs text-amber-800 font-medium">Aproveite sua refeição livre com estratégia e sem culpa.</p>
+                        </div>
+                    </div>
+                    <span id="cheat-mode-status-badge"></span>
+                </div>
+
+                <!-- Botão de Alternância do Modo Livre (Sem cores pretas) -->
+                <button id="cheat-mode-toggle-btn" onclick="CheatDay.toggleCheatMode()" class="mb-6"></button>
+
+                <!-- Cards do Banco Calórico Semanal -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm">
+                        <span class="text-[10px] font-black uppercase text-amber-700">Banco Calórico Poupado</span>
+                        <div id="cheat-bank-pool" class="text-2xl font-black text-amber-600 mt-1">+0 kcal</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Economizado na semana</p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm">
+                        <span class="text-[10px] font-black uppercase text-emerald-700">Orçamento do Dia Livre</span>
+                        <div id="cheat-allowance-kcal" class="text-2xl font-black text-emerald-700 mt-1">2000 kcal</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Sem comprometer seu progresso</p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm">
+                        <span class="text-[10px] font-black uppercase text-slate-400">Cota Semanal de Refeições</span>
+                        <div id="cheat-quota-display" class="text-sm font-black text-orange-600 mt-2">0 de 1 usada</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Economia: <span id="cheat-daily-saving">200 kcal/dia</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protocolo de Redução de Danos -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
+                            <span>🛡️</span> Protocolo de Redução de Danos
+                        </h3>
+                        <p class="text-xs text-slate-500 font-medium">Checklist para manter o corpo em alta performance antes e depois da refeição livre.</p>
+                    </div>
+                </div>
+
+                <div id="cheat-damage-control-list" class="space-y-2.5">
+                    <!-- Preenchido dinamicamente via cheat_day.js -->
+                </div>
+            </div>
+
+            <!-- Registro e Histórico de Refeições Livres -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-black text-slate-800">Histórico de Refeições Livres</h3>
+                    <button onclick="CheatDay.openLogCheatModal()" class="btn-amber-gradient px-4 py-2 rounded-2xl text-xs font-black shadow-md transition flex items-center gap-1 hover:scale-105">
+                        <span>+</span> Registrar Refeição Livre
+                    </button>
+                </div>
+
+                <div id="cheat-history-list" class="space-y-2.5">
+                    <!-- Preenchido dinamicamente via cheat_day.js -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== ABA 4: GUIA DE RESTAURANTES ==================== -->
+        <section id="tab-restaurantes" class="tab-content hidden">
+            
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <span>📍</span> Restaurantes Próximos & Recomendações
+                        </h2>
+                        <p class="text-xs text-slate-500 font-medium">Descubra o que pedir em cada lugar para manter a dieta ou para o Dia do Lixo.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button id="btn-get-location" onclick="Restaurants.getUserLocation()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-200/60">
+                            <span>📍</span> <span>Usar Meu GPS</span>
+                        </button>
+                        <button onclick="Restaurants.openAiMenuModal()" class="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-2xl text-xs font-bold transition flex items-center gap-1.5 border border-purple-200/60">
+                            <span>✨</span> <span>Analisar Cardápio IA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Campo de Pesquisa -->
+                <div class="relative mb-4">
+                    <input type="text" id="restaurant-search-input" placeholder="Buscar restaurante, culinária ou bairro..." 
+                           class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500 transition">
+                    <span class="absolute left-3.5 top-3.5 text-slate-400 text-xs">🔍</span>
+                </div>
+
+                <!-- Badges de Filtros de Culinária Coloridos -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                    <button onclick="Restaurants.filterByCuisine('Todos')" data-cuisine="Todos" class="cuisine-filter-btn px-4 py-1.5 rounded-full text-xs font-black bg-emerald-600 text-white shadow-md shadow-emerald-500/20 transition">Todos</button>
+                    <button onclick="Restaurants.filterByCuisine('Self-Service')" data-cuisine="Self-Service" class="cuisine-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 transition">Self-Service</button>
+                    <button onclick="Restaurants.filterByCuisine('Japonês')" data-cuisine="Japonês" class="cuisine-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 transition">Japonês</button>
+                    <button onclick="Restaurants.filterByCuisine('Hamburgueria')" data-cuisine="Hamburgueria" class="cuisine-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 transition">Hamburgueria</button>
+                    <button onclick="Restaurants.filterByCuisine('Pizzaria')" data-cuisine="Pizzaria" class="cuisine-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 transition">Pizzaria</button>
+                    <button onclick="Restaurants.filterByCuisine('Saudável / Fit')" data-cuisine="Saudável / Fit" class="cuisine-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 transition">Saudável / Fit</button>
+                    <button onclick="Restaurants.filterByCuisine('Árabe')" data-cuisine="Árabe" class="cuisine-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 transition">Árabe</button>
+                </div>
+            </div>
+
+            <!-- Lista de Restaurantes -->
+            <div id="restaurants-list-container">
+                <!-- Preenchido via restaurants.js -->
+            </div>
+
+        </section>
+
+        <!-- ==================== ABA 5: PROGRESSO & PERFIL ==================== -->
+        <section id="tab-progresso" class="tab-content hidden">
+            
+            <!-- Gráfico de Evolução de Peso -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-base">Evolução do Peso Corporal</h3>
+                        <p class="text-xs text-slate-400 font-medium">Acompanhe a tendência real de gordura e massa magra.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="log-weight-input" step="0.1" placeholder="Ex: 75.4" class="w-24 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-center text-slate-700">
+                        <button onclick="ProfileCharts.logWeight()" class="btn-primary-gradient px-4 py-2 rounded-xl text-xs font-black transition hover:scale-105">
+                            Registrar
+                        </button>
+                    </div>
+                </div>
+                <div class="h-56 w-full">
+                    <canvas id="weight-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico de Calorias Consumidas -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
+                <h3 class="font-black text-slate-800 text-base mb-1">Adesão Calórica (Últimos 7 Dias)</h3>
+                <p class="text-xs text-slate-400 font-medium mb-4">Consistência diária de calorias consumidas.</p>
+                <div class="h-44 w-full">
+                    <canvas id="caloric-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Formulário de Perfil e Metas Nutricionais -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 mb-6">
+                <!-- Banner Questionário Interativo -->
+                <div class="mb-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white shadow-md shadow-emerald-500/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl p-2 bg-white/20 rounded-2xl">🎯</span>
+                        <div>
+                            <h4 class="font-black text-sm">Questionário de Déficit & Metas</h4>
+                            <p class="text-xs text-emerald-100">Mudou de peso ou rotina? Recalcule passo a passo suas calorias e macronutrientes.</p>
+                        </div>
+                    </div>
+                    <button onclick="Onboarding.openQuizOnly()" class="px-4 py-2.5 rounded-xl bg-white text-emerald-800 font-black text-xs shadow hover:bg-emerald-50 transition shrink-0 flex items-center justify-center gap-1.5 hover:scale-105">
+                        <span>✨</span> Refazer Quiz
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-base">Configurações do Perfil & Metas</h3>
+                        <p class="text-xs text-slate-400 font-medium">Cálculo de TMB (Taxa Metabólica Basal) e GET por Mifflin-St Jeor.</p>
+                    </div>
+                    <button onclick="ProfileCharts.saveProfile(true)" class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-xs font-black shadow-md shadow-emerald-500/20 transition flex items-center gap-1 hover:scale-105">
+                        <span>⚡</span> Recalcular Metas
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase">Seu Nome</label>
+                        <input type="text" id="profile-name" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase">Gênero</label>
+                        <select id="profile-gender" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                            <option value="M">Masculino</option>
+                            <option value="F">Feminino</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase">Idade</label>
+                        <input type="number" id="profile-age" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase">Peso Atual (kg)</label>
+                        <input type="number" step="0.1" id="profile-weight" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase">Altura (cm)</label>
+                        <input type="number" id="profile-height" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase">Atividade Física</label>
+                        <select id="profile-activity" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                            <option value="sedentario">Sedentário</option>
+                            <option value="leve">Leve (1-2x/sem)</option>
+                            <option value="moderado" selected>Moderado (3-5x/sem)</option>
+                            <option value="intenso">Intenso (6-7x/sem)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label class="text-[11px] font-black text-slate-500 uppercase">Objetivo Principal</label>
+                    <select id="profile-goal" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700">
+                        <option value="emagrecer">🔥 Emagrecimento (Déficit Calórico Moderado)</option>
+                        <option value="hipertrofia">💪 Ganho de Massa Muscular (Superávit Limpo)</option>
+                        <option value="manter">⚖️ Manutenção e Saúde</option>
+                    </select>
+                </div>
+
+                <!-- Resumo Científico de Gasto -->
+                <div class="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl flex items-center justify-around text-center mb-6 text-xs border border-emerald-100">
+                    <div>
+                        <span class="text-slate-500 font-bold uppercase text-[10px]">TMB (Gasto Repouso)</span>
+                        <div id="calc-bmr-display" class="text-sm font-black text-slate-800">-- kcal</div>
+                    </div>
+                    <div class="w-px h-8 bg-emerald-200"></div>
+                    <div>
+                        <span class="text-emerald-700 font-bold uppercase text-[10px]">GET (Gasto Diário Total)</span>
+                        <div id="calc-tdee-display" class="text-sm font-black text-emerald-800">-- kcal</div>
+                    </div>
+                </div>
+
+                <h4 class="font-extrabold text-xs text-slate-700 uppercase tracking-wider mb-3">Metas Nutricionais Diárias:</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+                    <div>
+                        <label class="text-[10px] font-black text-emerald-700 uppercase">Calorias (kcal)</label>
+                        <input type="number" id="profile-target-cal" class="w-full mt-1 p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-black text-emerald-800">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-rose-700 uppercase">Proteína (g)</label>
+                        <input type="number" id="profile-target-p" class="w-full mt-1 p-2 bg-rose-50 border border-rose-200 rounded-xl text-xs font-black text-rose-800">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-amber-700 uppercase">Carboidrato (g)</label>
+                        <input type="number" id="profile-target-c" class="w-full mt-1 p-2 bg-amber-50 border border-amber-200 rounded-xl text-xs font-black text-amber-800">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-cyan-700 uppercase">Gordura (g)</label>
+                        <input type="number" id="profile-target-f" class="w-full mt-1 p-2 bg-cyan-50 border border-cyan-200 rounded-xl text-xs font-black text-cyan-800">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-sky-700 uppercase">Água (ml)</label>
+                        <input type="number" id="profile-target-water" class="w-full mt-1 p-2 bg-sky-50 border border-sky-200 rounded-xl text-xs font-black text-sky-800">
+                    </div>
+                </div>
+
+                <button onclick="ProfileCharts.saveProfile(false)" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-[1.01]">
+                    Salvar Dados do Perfil
+                </button>
+            </div>
+
+            <!-- Status da IA Integrada & Conexão de Chaves -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">⚡</span>
+                        <div>
+                            <h3 class="font-black text-slate-800 text-sm">Inteligência Artificial Integrada</h3>
+                            <p class="text-[11px] text-slate-400 font-medium">Mesma tecnologia de alta performance integrada no app de gastos</p>
+                        </div>
+                    </div>
+                    <div id="gemini-key-status"></div>
+                </div>
+
+                <div class="p-3.5 bg-emerald-50/80 border border-emerald-100 rounded-2xl mb-4">
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-emerald-600 text-base shrink-0 mt-0.5 font-black">✓</span>
+                        <div class="text-xs text-emerald-900 leading-relaxed">
+                            <strong>IA Ativa de Fábrica:</strong> O Scanner de Refeições por Foto e o Chat Nutricionista já estão funcionando com IA multimodal conectada nativamente. Você não precisa configurar nada para usar!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Links para Obter Chaves Gratuitas -->
+                <div class="mb-4">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">
+                        🔗 Links Oficiais para Chave Própria Gratuita (Opcional):
+                    </span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 rounded-2xl transition text-xs group">
+                            <div>
+                                <div class="font-black text-slate-800 group-hover:text-emerald-800 flex items-center gap-1.5">
+                                    <span>⚡</span> Groq Cloud (Ultra Rápido)
+                                </div>
+                                <div class="text-[10px] text-slate-400 font-mono">console.groq.com/keys</div>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-emerald-600 text-xs font-black">↗</span>
+                        </a>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between p-3 bg-slate-50 hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 rounded-2xl transition text-xs group">
+                            <div>
+                                <div class="font-black text-slate-800 group-hover:text-emerald-800 flex items-center gap-1.5">
+                                    <span>🤖</span> Google AI Studio (Gemini)
+                                </div>
+                                <div class="text-[10px] text-slate-400 font-mono">aistudio.google.com</div>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-emerald-600 text-xs font-black">↗</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 mb-1.5 block">Deseja usar sua própria chave de IA? (Opcional)</label>
+                    <div class="flex gap-2">
+                        <input type="password" id="profile-gemini-key" placeholder="gsk_... ou AIzaSy... (Deixe vazio para usar a IA integrada)" class="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono">
+                        <button onclick="ProfileCharts.saveApiKey()" class="btn-primary-gradient px-5 py-3 rounded-2xl text-xs font-black transition hover:scale-105 shrink-0">
+                            Salvar Chave
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1.5">
+                        * Deixe em branco e clique em salvar para reativar a IA Integrada padrão de fábrica.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== ABA: ASSISTENTE DE CARDÁPIO SEMANAL ==================== -->
+        <section id="tab-cardapio" class="tab-content hidden space-y-6">
+            <!-- Banner do Assistente de Cardápio -->
+            <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-emerald-500/20">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-2xl">🍽️</span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">Assistente Nutricional Inteligente</span>
+                        </div>
+                        <h2 class="text-lg sm:text-xl font-black tracking-tight leading-tight">Cardápio Semanal VivaLeve</h2>
+                        <p class="text-xs text-emerald-100 mt-1 max-w-xl">
+                            Sugestões balanceadas e saborosas da culinária brasileira para <b>Individual</b> (calibrado ao seu déficit) ou <b>Família</b> (receitas coletivas). Troque qualquer prato quando quiser e o cardápio reseta toda semana para nunca enjoar!
+                        </p>
+                    </div>
+                    <button onclick="MealAssistant.loadMenu(true)" class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/25 text-xs font-black text-white transition flex items-center justify-center gap-1.5 shrink-0">
+                        <span>🎲</span>
+                        <span>Sortear Nova Semana</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteúdo Renderizado Dinamicamente -->
+            <div id="menu-assistant-content"></div>
+        </section>
+
+        <!-- ABA: BATALHA FAMILIAR DO DIA DO LIXO -->
+        <section id="tab-familia" class="tab-content hidden space-y-6">
+            <!-- Banner Dinâmico da Família Real / Batalha -->
+            <div id="battle-header-banner"></div>
+
+            <!-- Banner do Campeão / Escolha da Refeição Livre -->
+            <div id="battle-champion-choice-container"></div>
+
+            <!-- Pódio dos 3 Primeiros Colocados -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>🥇</span> Pódio da Semana
+                    </h3>
+                    <span class="text-xs text-slate-400 font-bold">Atualizado em tempo real</span>
+                </div>
+                <div id="battle-podium-container"></div>
+            </div>
+
+            <!-- Missões Lúdicas do Dia (Ganhe Pontos Extras!) -->
+            <div class="bg-gradient-to-b from-amber-50/80 to-white rounded-3xl p-5 border border-amber-200/80 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🎯</span>
+                        <div>
+                            <h3 class="font-black text-slate-800 text-sm sm:text-base">Missões Lúdicas do Dia</h3>
+                            <p class="text-[11px] text-amber-800 font-bold">Cumpra desafios e dispare na frente na Batalha Familiar!</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-black px-2.5 py-1 rounded-xl bg-amber-100 text-amber-800">+Pontos VIP</span>
+                </div>
+                <div id="daily-missions-container" class="space-y-2.5"></div>
+            </div>
+
+            <!-- Ranking Completo de Todos os Familiares -->
+            <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">👨‍👩‍👧‍👦</span>
+                        <h3 class="font-black text-slate-800 text-sm sm:text-base">Classificação Geral da Casa</h3>
+                    </div>
+                    <button onclick="FamilyBattle.load()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                        <span>🔄</span> Atualizar
+                    </button>
+                </div>
+                <div id="battle-ranking-list" class="space-y-2.5"></div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Mascote Interativo "Vivi" -->
+    <div class="fixed bottom-20 right-4 z-30 flex flex-col items-end pointer-events-auto">
+        <div id="vivi-mascot-speech" class="speech-bubble hidden p-3 rounded-2xl text-xs font-bold text-slate-800 max-w-[210px] mb-2 fade-in">
+            Olá! Eu sou o Vivi! Clique em mim para dicas e comemorações! ✨
+        </div>
+        <button onclick="App.clickMascot()" class="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-400 via-teal-300 to-amber-300 p-1 shadow-lg shadow-emerald-500/30 transition hover:scale-110 active:scale-95 animate-mascot-float border-2 border-white" title="Clique no mascote Vivi!">
+            <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-2xl select-none">
+                🌱🔥
+            </div>
+        </button>
+    </div>
+
+    <!-- Barra de Navegação Inferior (Estilo App Mobile) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-emerald-100 py-2 px-3 shadow-lg shadow-emerald-500/10">
+        <div class="max-w-lg mx-auto flex items-center justify-around">
+            
+            <button data-tab-target="diario" class="flex flex-col items-center gap-0.5 sm:gap-1 text-emerald-600 font-black transition group">
+                <span class="text-lg sm:text-xl">🥗</span>
+                <span class="text-[10px] sm:text-[11px]">Diário</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full transition-all"></div>
+            </button>
+
+            <button data-tab-target="cardapio" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">🍽️</span>
+                <span class="text-[10px] sm:text-[11px]">Cardápio</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="scanner" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">📸</span>
+                <span class="text-[10px] sm:text-[11px]">Scanner</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="familia" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">🏆</span>
+                <span class="text-[10px] sm:text-[11px]">Família</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="dia-lixo" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">🍔</span>
+                <span class="text-[10px] sm:text-[11px]">Dia Lixo</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="restaurantes" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">📍</span>
+                <span class="text-[10px] sm:text-[11px]">Locais</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="progresso" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">📊</span>
+                <span class="text-[10px] sm:text-[11px]">Perfil</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+        </div>
+    </nav>
+
+    <!-- ========================================================
+         🚀 NOVO PORTAL: ONBOARDING WIZARD & CÁLCULO DE DÉFICIT
+         ======================================================== -->
+    <div id="modal-onboarding-wizard" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-7 shadow-2xl border border-emerald-100 relative my-auto">
+            
+            <!-- Botão de Fechar Global (Apenas para usuários já logados) -->
+            <button id="onboarding-global-close" onclick="Onboarding.close()" class="hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 z-10 transition">✕</button>
+
+            <!-- ================= TELA 0: BOAS-VINDAS / SPLASH ================= -->
+            <div id="onboarding-view-welcome" class="text-center py-2 space-y-4">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-amber-400 p-2 shadow-xl shadow-emerald-500/25 flex items-center justify-center">
+                    <img src="/static/icon.svg" alt="VivaLeve" class="w-full h-full object-contain filter drop-shadow">
+                </div>
+                <div>
+                    <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase tracking-wider">Boas-vindas ao VivaLeve</span>
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight mt-2">
+                        Dieta Inteligente, <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">Sem Neura & Com Dias Livres</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
+                        Calcule seu déficit calórico científico, acompanhe suas refeições e aproveite o Dia do Lixo em família com equilíbrio total!
+                    </p>
+                </div>
+
+                <div class="space-y-2.5 pt-2">
+                    <button onclick="Onboarding.startQuiz()" class="btn-primary-gradient w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 hover:scale-[1.02] transition">
+                        <span>🚀</span>
+                        <span>MONTAR MEU PLANO PERSONALIZADO (Começar)</span>
+                    </button>
+                    <button onclick="Onboarding.openLogin()" class="w-full py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition flex items-center justify-center gap-2">
+                        <span>🔑</span>
+                        <span>Já tenho uma conta (Entrar)</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-center gap-4 text-[11px] text-slate-400 font-semibold pt-1">
+                    <span>✓ Fórmula Mifflin-St Jeor</span>
+                    <span>•</span>
+                    <span>✓ Macros Personalizados</span>
+                    <span>•</span>
+                    <span>✓ 100% Grátis</span>
+                </div>
+            </div>
+
+            <!-- ================= TELA: LOGIN ================= -->
+            <div id="onboarding-view-login" class="hidden">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">🔑</span>
+                        <div>
+                            <h3 class="font-black text-slate-800 text-base">Entrar na Conta</h3>
+                            <p class="text-xs text-slate-400">Acesse seus dados e ofensivas salvas</p>
+                        </div>
+                    </div>
+                    <button onclick="Onboarding.showView('welcome')" class="text-xs font-bold text-emerald-600 hover:underline">Voltar</button>
+                </div>
+
+                <!-- Container de Contas Salvas no Aparelho -->
+                <div id="onboarding-saved-accounts-container" class="hidden"></div>
+
+                <form onsubmit="Auth.doLogin(event)" method="POST" class="space-y-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-500 uppercase">Seu E-mail</label>
+                        <input type="email" id="onboarding-login-email" name="email" autocomplete="username" placeholder="usuario@vivaleve.com" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500" required>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label class="text-[11px] font-bold text-slate-500 uppercase">Sua Senha</label>
+                            <button type="button" onclick="Auth.openResetModal(document.getElementById('onboarding-login-email')?.value)" class="text-[11px] font-bold text-emerald-600 hover:underline">Esqueceu a senha?</button>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="onboarding-login-password" name="password" autocomplete="current-password" placeholder="••••••••" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold pr-10 focus:outline-none focus:border-emerald-500" required>
+                            <button type="button" onclick="Auth.togglePassword('onboarding-login-password', this)" class="absolute right-3 top-3.5 text-slate-400 text-sm">👁️</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 pt-0.5">
+                        <input type="checkbox" id="onboarding-remember-me" name="remember" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                        <label for="onboarding-remember-me" class="text-xs text-slate-600 font-medium select-none cursor-pointer">Lembrar minha conta neste aparelho</label>
+                    </div>
+
+                    <button type="submit" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                        Entrar na Minha Conta
+                    </button>
+                </form>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                    <p class="text-xs text-slate-500">Novo por aqui?</p>
+                    <button onclick="Onboarding.startQuiz()" class="text-xs font-black text-emerald-700 hover:underline mt-0.5">
+                        Criar Conta e Montar Meu Plano Nutricional ▶
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= TELA: WIZARD QUESTIONÁRIO (PASSOS 1 A 6) ================= -->
+            <div id="onboarding-view-wizard" class="hidden">
+                <!-- Barra de Progresso Superior -->
+                <div class="mb-5">
+                    <div class="flex items-center justify-between text-xs mb-1.5 font-bold">
+                        <button onclick="Onboarding.prevStep()" class="text-slate-400 hover:text-slate-700 flex items-center gap-1 font-bold">
+                            <span>◀</span> Voltar
+                        </button>
+                        <span id="wizard-step-counter" class="text-emerald-700 font-black">Etapa 1 de 6</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="wizard-progress-fill" class="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 rounded-full transition-all duration-300" style="width: 16%"></div>
+                    </div>
+                </div>
+
+                <!-- PASSO 1: OBJETIVO PRINCIPAL -->
+                <div id="wizard-step-1" class="quiz-step space-y-4">
+                    <div class="text-center">
+                        <span class="text-3xl">🎯</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Qual é o seu objetivo principal?</h3>
+                        <p class="text-xs text-slate-400">Personalizaremos suas calorias e macronutrientes com base nisso.</p>
+                    </div>
+
+                    <div class="space-y-2.5">
+                        <div data-goal="emagrecer" onclick="Onboarding.selectGoal('emagrecer')" class="quiz-goal-btn quiz-card-selected flex items-center gap-4 p-4 rounded-3xl border-2 border-emerald-500 bg-emerald-50/80 shadow-md transition-all scale-[1.02] cursor-pointer">
+                            <span class="text-3xl p-2.5 bg-white rounded-2xl shadow-sm shrink-0">🔥</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-sm">Emagrecer & Queimar Gordura</h4>
+                                <p class="text-xs text-slate-500">Déficit calórico inteligente para secar mantendo a saúde e massa magra.</p>
+                            </div>
+                        </div>
+
+                        <div data-goal="manter" onclick="Onboarding.selectGoal('manter')" class="quiz-goal-btn flex items-center gap-4 p-4 rounded-3xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-3xl p-2.5 bg-slate-50 rounded-2xl shadow-sm shrink-0">⚖️</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-sm">Manter Meu Peso Atual</h4>
+                                <p class="text-xs text-slate-500">Equilíbrio metabólico para manter boa composição corporal e saúde.</p>
+                            </div>
+                        </div>
+
+                        <div data-goal="hipertrofia" onclick="Onboarding.selectGoal('hipertrofia')" class="quiz-goal-btn flex items-center gap-4 p-4 rounded-3xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-3xl p-2.5 bg-slate-50 rounded-2xl shadow-sm shrink-0">💪</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-sm">Ganho de Massa Muscular</h4>
+                                <p class="text-xs text-slate-500">Superávit limpo com alta ingestão de proteínas para hipertrofia.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="Onboarding.nextStep()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                        Continuar ▶
+                    </button>
+                </div>
+
+                <!-- PASSO 2: SEXO BIOLÓGICO & IDADE -->
+                <div id="wizard-step-2" class="quiz-step hidden space-y-4">
+                    <div class="text-center">
+                        <span class="text-3xl">👤</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Sobre você</h3>
+                        <p class="text-xs text-slate-400">Necessário para a fórmula metabólica basal (Mifflin-St Jeor).</p>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase block mb-1.5">Sexo Biológico:</label>
+                        <div class="flex gap-3">
+                            <button type="button" id="quiz-gender-m" onclick="Onboarding.selectGender('M')" class="flex-1 p-4 rounded-3xl border-2 border-emerald-500 bg-emerald-50/80 text-emerald-900 font-black shadow-md transition scale-[1.02] flex flex-col items-center gap-1 cursor-pointer">
+                                <span class="text-3xl">👨</span>
+                                <span class="text-xs">Homem</span>
+                            </button>
+                            <button type="button" id="quiz-gender-f" onclick="Onboarding.selectGender('F')" class="flex-1 p-4 rounded-3xl border-2 border-slate-100 hover:border-emerald-200 bg-white text-slate-600 font-bold shadow-sm transition flex flex-col items-center gap-1 cursor-pointer">
+                                <span class="text-3xl">👩</span>
+                                <span class="text-xs">Mulher</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase block mb-1.5">Sua Idade:</label>
+                        <div class="flex items-center gap-3">
+                            <input type="number" id="quiz-age" value="28" min="12" max="110" class="flex-1 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-base font-black text-center text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <span class="text-xs font-bold text-slate-500">anos</span>
+                        </div>
+                    </div>
+
+                    <button onclick="Onboarding.nextStep()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                        Continuar ▶
+                    </button>
+                </div>
+
+                <!-- PASSO 3: PESO & ALTURA COM IMC EM TEMPO REAL -->
+                <div id="wizard-step-3" class="quiz-step hidden space-y-4">
+                    <div class="text-center">
+                        <span class="text-3xl">⚖️</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Suas medidas atuais</h3>
+                        <p class="text-xs text-slate-400">Usado para calcular seu gasto calórico e IMC.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Peso Atual (kg):</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" id="quiz-weight" value="75.0" oninput="Onboarding.updateBmiPreview()" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-base font-black text-slate-800 focus:outline-none focus:border-emerald-500">
+                                <span class="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">kg</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Altura (cm):</label>
+                            <div class="relative">
+                                <input type="number" id="quiz-height" value="175" oninput="Onboarding.updateBmiPreview()" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-base font-black text-slate-800 focus:outline-none focus:border-emerald-500">
+                                <span class="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400">cm</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Badge Interativo de IMC em Tempo Real -->
+                    <div id="quiz-bmi-badge" class="p-3.5 rounded-2xl border flex items-center justify-between bg-emerald-50 text-emerald-800 border-emerald-300 transition-all">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">📊</span>
+                            <div>
+                                <span class="text-[10px] font-black uppercase tracking-wider block leading-tight">Índice de Massa Corporal</span>
+                                <span id="quiz-bmi-status" class="text-xs font-extrabold">Peso Saudável</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold text-slate-500 block">IMC</span>
+                            <span id="quiz-bmi-val" class="text-base font-black">24.5</span>
+                        </div>
+                    </div>
+
+                    <button onclick="Onboarding.nextStep()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                        Continuar ▶
+                    </button>
+                </div>
+
+                <!-- PASSO 4: RITMO & PESO DESEJADO -->
+                <div id="wizard-step-4" class="quiz-step hidden space-y-4">
+                    <div class="text-center">
+                        <span class="text-3xl">⚡</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1" id="quiz-pace-title">Ritmo do Déficit Calórico:</h3>
+                        <p class="text-xs text-slate-400" id="quiz-pace-description">Escolha a velocidade com que deseja atingir seu objetivo.</p>
+                    </div>
+
+                    <div id="quiz-target-weight-container">
+                        <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Qual o seu peso desejado (meta)?</label>
+                        <div class="relative">
+                            <input type="number" step="0.1" id="quiz-target-weight" value="70.0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-black text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <span class="absolute right-3.5 top-3 text-xs font-bold text-slate-400">kg</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div data-pace="suave" onclick="Onboarding.selectPace('suave')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-2xl p-2 bg-emerald-50 rounded-xl">🌱</span>
+                            <div class="text-left flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-black text-slate-800 text-xs">Suave & Sustentável</h4>
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">-300 kcal/dia</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.3 kg por semana. Muito fácil de manter sem passar fome.</p>
+                            </div>
+                        </div>
+
+                        <div data-pace="moderado" onclick="Onboarding.selectPace('moderado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/80 shadow-md transition-all scale-[1.02] cursor-pointer">
+                            <span class="text-2xl p-2 bg-teal-50 rounded-xl">🎯</span>
+                            <div class="text-left flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-black text-slate-800 text-xs">Moderado (Recomendado)</h4>
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">-500 kcal/dia</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.5 kg por semana. O padrão ouro dos nutricionistas.</p>
+                            </div>
+                        </div>
+
+                        <div data-pace="acelerado" onclick="Onboarding.selectPace('acelerado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-2xl p-2 bg-amber-50 rounded-xl">⚡</span>
+                            <div class="text-left flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-black text-slate-800 text-xs">Acelerado & Focado</h4>
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">-750 kcal/dia</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.75 kg por semana. Requer foco total e mais disciplina.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="Onboarding.nextStep()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                        Continuar ▶
+                    </button>
+                </div>
+
+                <!-- PASSO 5: NÍVEL DE ATIVIDADE FÍSICA -->
+                <div id="wizard-step-5" class="quiz-step hidden space-y-4">
+                    <div class="text-center">
+                        <span class="text-3xl">🏃</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Atividade física diária</h3>
+                        <p class="text-xs text-slate-400">Qual o seu nível de movimentação e treinos no dia a dia?</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div data-activity="sedentario" onclick="Onboarding.selectActivity('sedentario')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-2xl p-2 bg-slate-100 rounded-xl">🛋️</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-xs">Sedentário</h4>
+                                <p class="text-[11px] text-slate-400">Trabalho sentado, pouco ou nenhum exercício semanal.</p>
+                            </div>
+                        </div>
+
+                        <div data-activity="leve" onclick="Onboarding.selectActivity('leve')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-2xl p-2 bg-slate-100 rounded-xl">🚶</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-xs">Levemente Ativo</h4>
+                                <p class="text-[11px] text-slate-400">Caminhadas ou exercícios leves 1 a 2 vezes por semana.</p>
+                            </div>
+                        </div>
+
+                        <div data-activity="moderado" onclick="Onboarding.selectActivity('moderado')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/80 shadow-md transition-all scale-[1.02] cursor-pointer">
+                            <span class="text-2xl p-2 bg-emerald-100 rounded-xl">🏃</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-xs">Moderadamente Ativo</h4>
+                                <p class="text-[11px] text-slate-400">Treinos (musculação, corrida) 3 a 5 vezes por semana.</p>
+                            </div>
+                        </div>
+
+                        <div data-activity="intenso" onclick="Onboarding.selectActivity('intenso')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                            <span class="text-2xl p-2 bg-slate-100 rounded-xl">⚡</span>
+                            <div class="text-left">
+                                <h4 class="font-black text-slate-800 text-xs">Muito Ativo / Atleta</h4>
+                                <p class="text-[11px] text-slate-400">Treinos pesados quase diários ou trabalho físico intenso.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="Onboarding.nextStep()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                        Calcular Meu Plano Nutricional ▶
+                    </button>
+                </div>
+
+                <!-- PASSO 6: REVELAÇÃO DO PLANO & SALVAR CONTA -->
+                <div id="wizard-step-6" class="quiz-step hidden space-y-4">
+                    <div class="text-center">
+                        <span class="text-3xl animate-bounce">🎉</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Seu Plano Nutricional VivaLeve</h3>
+                        <p class="text-xs text-slate-400">Calculado com base científica personalizada para você.</p>
+                    </div>
+
+                    <div id="wizard-plan-loading" class="py-8 text-center text-xs font-bold text-emerald-700">
+                        <span class="inline-block animate-spin text-2xl mb-2">⚙️</span>
+                        <p>Calculando suas taxas metabólicas e macronutrientes...</p>
+                    </div>
+
+                    <div id="wizard-plan-content" class="hidden space-y-3.5">
+                        <!-- Card de Revelação das Calorias e Déficit -->
+                        <div class="p-4 rounded-3xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/25">
+                            <div class="flex items-center justify-between text-xs mb-2">
+                                <span class="font-black uppercase tracking-wider text-emerald-200 text-[10px]">Meta Calórica Diária</span>
+                                <span id="plan-deficit-val" class="font-black text-xs px-2 py-0.5 rounded-full bg-white/20">-500 kcal (Déficit)</span>
+                            </div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="plan-calories-val" class="text-3xl sm:text-4xl font-black tracking-tight">1850 kcal/dia</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-white/20 text-xs">
+                                <div>
+                                    <span class="text-[10px] text-emerald-200 uppercase font-bold block">Gasto Basal (TMB)</span>
+                                    <b id="plan-bmr-val" class="text-sm font-black">1650 kcal</b>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-emerald-200 uppercase font-bold block">Gasto Total (GET)</span>
+                                    <b id="plan-tdee-val" class="text-sm font-black">2350 kcal</b>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Distribuição de Macronutrientes & Água -->
+                        <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                            <div class="p-2.5 rounded-2xl bg-rose-50 border border-rose-100">
+                                <span class="text-rose-500 font-bold text-[10px] block uppercase">Proteínas</span>
+                                <b id="plan-protein-val" class="text-rose-900 font-black text-sm">150g</b>
+                            </div>
+                            <div class="p-2.5 rounded-2xl bg-amber-50 border border-amber-100">
+                                <span class="text-amber-500 font-bold text-[10px] block uppercase">Carbos</span>
+                                <b id="plan-carbs-val" class="text-amber-900 font-black text-sm">180g</b>
+                            </div>
+                            <div class="p-2.5 rounded-2xl bg-cyan-50 border border-cyan-100">
+                                <span class="text-cyan-500 font-bold text-[10px] block uppercase">Gorduras</span>
+                                <b id="plan-fat-val" class="text-cyan-900 font-black text-sm">55g</b>
+                            </div>
+                            <div class="p-2.5 rounded-2xl bg-sky-50 border border-sky-100">
+                                <span class="text-sky-500 font-bold text-[10px] block uppercase">Água</span>
+                                <b id="plan-water-val" class="text-sky-900 font-black text-sm">2850 ml</b>
+                            </div>
+                        </div>
+
+                        <!-- Seção de Cadastro de Nova Conta -->
+                        <div id="plan-register-section" class="border-t border-slate-100 pt-3 space-y-2.5">
+                            <span class="text-[11px] font-black text-slate-600 uppercase block">Salve seu plano criando sua conta:</span>
+                            <input type="text" id="quiz-reg-name" name="name" autocomplete="name" placeholder="Seu Nome Completo" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500">
+                            <input type="email" id="quiz-reg-email" name="email" autocomplete="username" placeholder="seuemail@exemplo.com" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500">
+                            <div class="relative">
+                                <input type="password" id="quiz-reg-password" name="password" autocomplete="new-password" placeholder="Crie uma Senha (mínimo 4 caracteres)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold pr-10 focus:outline-none focus:border-emerald-500">
+                                <button type="button" onclick="Auth.togglePassword('quiz-reg-password', this)" class="absolute right-3 top-3.5 text-slate-400 text-sm">👁️</button>
+                            </div>
+                            
+                            <button onclick="Onboarding.submitRegistration(event)" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-lg shadow-emerald-500/30 transition hover:scale-105">
+                                🎉 Salvar Meu Plano & Entrar no VivaLeve!
+                            </button>
+                        </div>
+
+                        <!-- Seção Apenas Atualização de Metas (Usuário já logado) -->
+                        <div id="plan-quizonly-section" class="hidden border-t border-slate-100 pt-3">
+                            <button onclick="Onboarding.submitQuizUpdate()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-lg shadow-emerald-500/30 transition hover:scale-105">
+                                💾 Salvar Novas Metas no Meu Perfil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal: Autenticação (Login & Cadastro) -->
+    <div id="modal-auth" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-emerald-100 fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🌱</span>
+                    <h3 class="font-black text-slate-800 text-base">VivaLeve Conta</h3>
+                </div>
+                <button onclick="Auth.closeModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <!-- Abas Entrar / Criar Conta -->
+            <div class="flex bg-slate-100 p-1 rounded-2xl mb-4">
+                <button id="auth-tab-btn-login" onclick="Auth.switchTab('login')" class="flex-1 py-2 text-xs font-bold rounded-xl bg-white text-emerald-700 shadow-sm transition">
+                    Entrar
+                </button>
+                <button id="auth-tab-btn-register" onclick="Auth.switchTab('register')" class="flex-1 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:text-slate-700 transition">
+                    Criar Conta
+                </button>
+            </div>
+
+            <!-- Container de Contas Salvas no Aparelho -->
+            <div id="auth-saved-accounts-container" class="hidden"></div>
+
+            <!-- Form Login -->
+            <form id="auth-form-login" onsubmit="Auth.doLogin(event)" method="POST" class="space-y-3.5">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Seu E-mail</label>
+                    <input type="email" id="login-email" name="email" autocomplete="username" placeholder="usuario@vivaleve.com" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500" required>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase">Sua Senha</label>
+                        <button type="button" onclick="Auth.openResetModal(document.getElementById('login-email')?.value)" class="text-[11px] font-bold text-emerald-600 hover:underline">Esqueceu a senha?</button>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="••••••••" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold pr-10 focus:outline-none focus:border-emerald-500" required>
+                        <button type="button" onclick="Auth.togglePassword('login-password', this)" class="absolute right-3 top-3.5 text-slate-400 text-sm">👁️</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-0.5">
+                    <input type="checkbox" id="auth-remember-me" name="remember" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                    <label for="auth-remember-me" class="text-xs text-slate-600 font-medium select-none cursor-pointer">Lembrar minha conta neste aparelho</label>
+                </div>
+
+                <p class="text-[11px] text-slate-400">Dica: conta padrão para testes: <b>usuario@vivaleve.com</b> / senha: <b>123456</b></p>
+                <button type="submit" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                    Entrar na Minha Conta
+                </button>
+            </form>
+
+            <!-- Form Cadastro -->
+            <form id="auth-form-register" onsubmit="Auth.doRegister(event)" method="POST" class="hidden space-y-3.5">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Seu Nome Completo</label>
+                    <input type="text" id="reg-name" name="name" autocomplete="name" placeholder="Ex: Lucas Silva" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500" required>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Seu E-mail</label>
+                    <input type="email" id="reg-email" name="email" autocomplete="username" placeholder="lucas@exemplo.com" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500" required>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Crie uma Senha</label>
+                    <div class="relative">
+                        <input type="password" id="reg-password" name="password" autocomplete="new-password" placeholder="Mínimo 4 caracteres" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold pr-10 focus:outline-none focus:border-emerald-500" required>
+                        <button type="button" onclick="Auth.togglePassword('reg-password', this)" class="absolute right-3 top-3.5 text-slate-400 text-sm">👁️</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                    Criar Minha Conta Grátis
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                <span class="text-slate-400 font-medium">Trocar usuário?</span>
+                <button type="button" onclick="Auth.logout()" class="text-rose-500 font-bold hover:underline">Sair da Conta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Redefinir Senha -->
+    <div id="modal-reset-password" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-emerald-100 fade-in text-left">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🔒</span>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm">Redefinir Senha</h3>
+                        <p class="text-[11px] text-slate-400">Recupere o acesso à sua conta</p>
+                    </div>
+                </div>
+                <button onclick="Auth.closeResetModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <form id="auth-form-reset" onsubmit="Auth.doResetPassword(event)" method="POST" class="space-y-3.5">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Seu E-mail Cadastrado</label>
+                    <input type="email" id="reset-email" name="email" autocomplete="username" placeholder="seu@email.com" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500" required>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nova Senha</label>
+                    <div class="relative">
+                        <input type="password" id="reset-new-password" name="password" autocomplete="new-password" placeholder="Mínimo 4 caracteres" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold pr-10 focus:outline-none focus:border-emerald-500" required>
+                        <button type="button" onclick="Auth.togglePassword('reset-new-password', this)" class="absolute right-3 top-3.5 text-slate-400 text-sm">👁️</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                    Redefinir Senha e Entrar ▶
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Instalação no Celular / Baixar APK & Integração iOS -->
+    <div id="modal-mobile-app" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-emerald-100 fade-in text-center max-h-[90vh] overflow-y-auto">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2 text-left">
+                    <span class="text-2xl">📲</span>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm sm:text-base">Instalar VivaLeve no Celular</h3>
+                        <p class="text-[11px] text-emerald-600 font-bold">Compatível com Android e iPhone (iOS)</p>
+                    </div>
+                </div>
+                <button onclick="App.closeMobileModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <!-- Seletor de Plataforma: Android vs iOS vs Wi-Fi -->
+            <div class="flex p-1 bg-slate-100 rounded-2xl mb-4 text-xs font-bold">
+                <button id="mobile-tab-btn-android" onclick="App.switchMobileModalTab('android')" class="flex-1 py-2 rounded-xl bg-white text-slate-800 shadow-sm transition">
+                    🤖 Android (APK)
+                </button>
+                <button id="mobile-tab-btn-ios" onclick="App.switchMobileModalTab('ios')" class="flex-1 py-2 rounded-xl text-slate-500 hover:text-slate-700 transition">
+                    🍎 iPhone (iOS)
+                </button>
+                <button id="mobile-tab-btn-wifi" onclick="App.switchMobileModalTab('wifi')" class="flex-1 py-2 rounded-xl text-slate-500 hover:text-slate-700 transition">
+                    🌍 4G/5G & Sem IP
+                </button>
+            </div>
+
+            <!-- Aba 1: Android (Download Direto do APK) -->
+            <div id="mobile-tab-content-android" class="text-left space-y-3">
+                <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs text-emerald-900">
+                    <b class="text-emerald-700">✓ Instalação Direta no Android:</b>
+                    <p class="mt-0.5 text-slate-600">Baixe o pacote <b>VivaLeve.apk</b>. Ao abrir no celular, confirme "Instalar de Fontes Conhecidas" ou "Atualizar aplicativo".</p>
+                </div>
+
+                <a href="/download/apk" download="VivaLeve.apk" class="btn-primary-gradient w-full py-4 rounded-2xl text-xs sm:text-sm font-black shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 hover:scale-[1.02] transition">
+                    <span class="text-xl">📥</span>
+                    <span>BAIXAR VIVALEVE.APK (~5.3 MB)</span>
+                </a>
+
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
+                    <span class="font-bold text-slate-700 block mb-1">Passo a passo no Android:</span>
+                    <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-500">
+                        <li>Toque no botão verde acima para baixar o arquivo.</li>
+                        <li>Abra o arquivo baixado nas notificações ou na pasta Downloads.</li>
+                        <li>Caso o Android pergunte, permita a instalação. Pronto!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Aba 2: iPhone / iPad (iOS Safari WebApp) -->
+            <div id="mobile-tab-content-ios" class="hidden text-left space-y-3">
+                <div class="p-3 bg-slate-900 text-white rounded-2xl text-xs">
+                    <div class="flex items-center gap-2 mb-1 text-amber-300 font-black">
+                        <span>🍎</span>
+                        <span>Instalação Oficial no iOS (Safari PWA)</span>
+                    </div>
+                    <p class="text-slate-300 text-[11px]">No iPhone, os apps da web são instalados instantaneamente pelo Safari com suporte a tela cheia e ícone nativo!</p>
+                </div>
+
+                <!-- Tutorial Passo a Passo com Ícones -->
+                <div class="space-y-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
+                    <div class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center justify-center shrink-0">1</span>
+                        <div>
+                            <p class="font-black text-slate-800">Abra no Safari</p>
+                            <p class="text-[11px] text-slate-500">Abra este site pelo navegador <b>Safari</b> no seu iPhone.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center justify-center shrink-0">2</span>
+                        <div>
+                            <p class="font-black text-slate-800">Toque em Compartilhar <span class="text-base">📤</span></p>
+                            <p class="text-[11px] text-slate-500">Toque no botão de <b>Compartilhar</b> (o quadrado com uma seta para cima) na barra inferior do Safari.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center justify-center shrink-0">3</span>
+                        <div>
+                            <p class="font-black text-slate-800">"Adicionar à Tela de Início" <span class="text-base">➕</span></p>
+                            <p class="text-[11px] text-slate-500">Role o menu para baixo e selecione a opção <b>"Adicionar à Tela de Início"</b>.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center justify-center shrink-0">4</span>
+                        <div>
+                            <p class="font-black text-slate-800">Toque em "Adicionar"</p>
+                            <p class="text-[11px] text-slate-500">Confirme no canto superior direito. O ícone do VivaLeve ficará salvo na tela do seu iPhone!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-2.5 bg-emerald-50 rounded-xl text-[11px] text-emerald-800 font-semibold">
+                    ✨ <b>Vantagem no iOS:</b> Roda em tela cheia sem a barra de endereços do Safari, com suporte a modo escuro, ícone em alta resolução e notch do iPhone.
+                </div>
+            </div>
+
+            <!-- Aba 3: Conexão Global 4G/5G & Qualquer Lugar (Sem IP Local) -->
+            <div id="mobile-tab-content-wifi" class="hidden text-center space-y-3">
+                <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 text-xs text-emerald-900 text-left">
+                    <b class="text-emerald-700 flex items-center gap-1.5">
+                        <span>🌍</span> Link Público Seguro (HTTPS / Sem IP Local):
+                    </b>
+                    <p class="mt-0.5 text-slate-600">Este link funciona em <b>qualquer lugar do mundo</b> via 4G, 5G ou Wi-Fi externo sem precisar estar na mesma rede do computador!</p>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-3xl border border-slate-200 inline-block shadow-inner">
+                    <div id="qrcode-container" class="flex justify-center"></div>
+                </div>
+
+                <p class="text-xs font-bold text-slate-700">Aponte a câmera do celular (Android ou iPhone)</p>
+                
+                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-left">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Endereço de Acesso Direto:</span>
+                    <div class="flex items-center justify-between gap-2 overflow-hidden">
+                        <span id="mobile-url-display" class="font-mono text-xs text-emerald-700 font-bold truncate select-all">Carregando...</span>
+                        <button type="button" onclick="App.copyMobileUrl()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shrink-0 shadow-xs transition">
+                            📋 Copiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 mt-4">
+                <button onclick="App.closeMobileModal()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Criar Nova Família Real -->
+    <div id="modal-create-family" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-emerald-100 fade-in text-left">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">👨‍👩‍👧‍👦</span>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm sm:text-base">Criar Grupo da Família</h3>
+                        <p class="text-[11px] text-emerald-600 font-bold">Inicie sua liga familiar e ganhe +50 pts</p>
+                    </div>
+                </div>
+                <button onclick="FamilyBattle.closeCreateFamilyModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nome da Família / Casa</label>
+                    <input type="text" id="create-family-name-input" placeholder="Ex: Família Silva, Mansão dos Fortes..." class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-emerald-500">
+                </div>
+
+                <div class="p-3 bg-emerald-50 rounded-2xl text-xs text-emerald-800">
+                    💡 <b>Como funciona:</b> Ao criar o grupo, um <b>Código de Convite Exclusivo</b> será gerado automaticamente. Seus parentes poderão entrar no grupo usando esse código!
+                </div>
+
+                <button onclick="FamilyBattle.submitCreateFamily()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                    ✨ Criar Grupo e Gerar Código
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Entrar em Família Existente com Código -->
+    <div id="modal-join-family" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-emerald-100 fade-in text-left">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🔑</span>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm sm:text-base">Entrar em Grupo de Família</h3>
+                        <p class="text-[11px] text-emerald-600 font-bold">Use o código de convite e ganhe +30 pts</p>
+                    </div>
+                </div>
+                <button onclick="FamilyBattle.closeJoinFamilyModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Código de Convite</label>
+                    <input type="text" id="join-family-code-input" placeholder="Ex: SILVA-4821" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono font-bold text-slate-800 uppercase tracking-widest text-center focus:outline-emerald-500">
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-2xl text-xs text-slate-600">
+                    Peça o código para o criador da família. Ele pode copiar o código direto no topo da aba Família!
+                </div>
+
+                <button onclick="FamilyBattle.submitJoinFamily()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                    🚀 Entrar no Grupo da Família
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Adicionar Familiar Diretamente -->
+    <div id="modal-add-family-member" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-emerald-100 fade-in text-left">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">➕</span>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm sm:text-base">Adicionar Parente à Família</h3>
+                        <p class="text-[11px] text-emerald-600 font-bold">Cadastre filhos, cônjuge ou parentes</p>
+                    </div>
+                </div>
+                <button onclick="FamilyBattle.closeAddMemberModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nome do Parente</label>
+                    <input type="text" id="add-member-name-input" placeholder="Ex: Maria Eduarda, Lucas..." class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-emerald-500">
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">E-mail do Familiar</label>
+                    <input type="email" id="add-member-email-input" placeholder="Ex: lucas@gmail.com" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-emerald-500">
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Senha Temporária</label>
+                    <input type="text" id="add-member-pass-input" value="123456" class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-800 focus:outline-emerald-500">
+                    <span class="text-[10px] text-slate-400">Pode ser alterada depois pelo parente no login.</span>
+                </div>
+
+                <button onclick="FamilyBattle.submitAddMember()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105 mt-2">
+                    ✅ Adicionar à Batalha Familiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Foguinho e Ofensiva (Duolingo & TikTok) -->
+    <div id="modal-streak" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-amber-100 fade-in text-center relative overflow-hidden">
+            <button onclick="Streak.closeModal()" class="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+
+            <div class="w-20 h-20 mx-auto rounded-3xl flame-box-glow flex items-center justify-center text-5xl mb-2 animate-flame-bounce">
+                🔥
+            </div>
+
+            <h3 id="streak-modal-count" class="text-4xl font-black text-amber-600">0</h3>
+            <p class="text-xs font-black text-amber-800 uppercase tracking-wider mt-0.5" id="streak-modal-title">Dias de Ofensiva</p>
+            <p id="streak-modal-msg" class="text-xs text-slate-500 mt-2 px-3">
+                Registre suas refeições ou hidratação diariamente para manter a chama acesa!
+            </p>
+
+            <!-- Calendário Semanal de Fogo -->
+            <div class="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200/60 my-4">
+                <span class="text-[10px] font-black text-amber-800 uppercase tracking-wide block mb-2">Histórico dos Últimos 7 Dias</span>
+                <div id="streak-modal-calendar" class="flex justify-between items-center gap-1"></div>
+            </div>
+
+            <!-- Proteção de Sequência -->
+            <div class="flex items-center justify-between p-3 bg-cyan-50 rounded-2xl border border-cyan-100 text-xs mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">🛡️</span>
+                    <div class="text-left">
+                        <span class="font-black text-cyan-900 block leading-tight">Escudo de Congelamento</span>
+                        <span class="text-[10px] text-cyan-700">Protege a ofensiva se esquecer um dia</span>
+                    </div>
+                </div>
+                <span id="streak-modal-freezes" class="font-black text-cyan-800 text-xs">2/2 Ativas</span>
+            </div>
+
+            <button onclick="Streak.closeModal()" class="btn-amber-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                Continuar Focado! 🔥
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Adicionar Alimento ao Diário -->
+    <div id="modal-add-food" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] flex flex-col fade-in">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div>
+                    <h3 class="font-black text-slate-800 text-base">Adicionar Alimento</h3>
+                    <p class="text-xs text-slate-400">Refeição: <span id="modal-meal-name" class="font-bold text-emerald-600">Almoço</span></p>
+                </div>
+                <button onclick="Diary.closeAddModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100">✕</button>
+            </div>
+
+            <!-- Campo de Busca na Base TACO -->
+            <div class="relative mb-3">
+                <input type="text" id="food-search-input" oninput="Diary.searchFoods(this.value)" placeholder="Buscar alimento brasileiro (arroz, frango, feijão...)" 
+                       class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-500">
+                <span class="absolute left-3 top-3 text-slate-400 text-xs">🔍</span>
+            </div>
+
+            <!-- Lista de Resultados -->
+            <div id="food-search-results" class="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-60 mb-4">
+                <!-- Preenchido dinamicamente -->
+            </div>
+
+            <!-- Seção de Quantidade / Gramas -->
+            <div id="food-quantity-section" class="hidden border-t border-slate-100 pt-4 bg-slate-50/50 p-3.5 rounded-2xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span id="selected-food-name" class="font-bold text-slate-800 text-xs truncate max-w-[200px]">Alimento</span>
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" id="food-grams-input" oninput="Diary.updateFoodPreviewCalculation()" class="w-20 p-1.5 bg-white border border-slate-300 rounded-xl text-xs font-black text-center text-slate-800">
+                        <span class="text-xs font-bold text-slate-500">gramas</span>
+                    </div>
+                </div>
+
+                <div id="food-preview-calc" class="mb-3"></div>
+
+                <button onclick="Diary.confirmAddFood()" class="btn-primary-gradient w-full py-3 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                    Adicionar ao Diário
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Refeição Livre (Dia do Lixo) -->
+    <div id="modal-log-cheat" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-black text-slate-800 text-base">Registrar Refeição Livre</h3>
+                <button onclick="CheatDay.closeLogCheatModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <div class="space-y-3.5 mb-5">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">O que você comeu?</label>
+                    <input type="text" id="cheat-meal-title" placeholder="Ex: Hambúrguer duplo com fritas e milk-shake" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Restaurante / Local (Opcional)</label>
+                    <input type="text" id="cheat-meal-restaurant" placeholder="Ex: Brava Burger ou Em Casa" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Calorias Estimadas (kcal)</label>
+                    <input type="number" id="cheat-meal-calories" value="1200" class="w-full mt-1 p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-black text-amber-700">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Como se sentiu? / Notas</label>
+                    <input type="text" id="cheat-meal-notes" placeholder="Ex: Matei a vontade sem exageros e bebi 1L de água." class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+            </div>
+
+            <button onclick="CheatDay.submitCheatMeal()" class="btn-amber-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
+                Salvar Refeição Livre
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Analisar Cardápio com IA -->
+    <div id="modal-ai-menu" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] flex flex-col fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div>
+                    <h3 class="font-black text-slate-800 text-base">Consultor de Cardápio com IA</h3>
+                    <p class="text-xs text-slate-400">Descubra as melhores opções de qualquer restaurante.</p>
+                </div>
+                <button onclick="Restaurants.closeAiMenuModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-full">✕</button>
+            </div>
+
+            <div class="space-y-3 mb-4">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nome do Restaurante</label>
+                    <input type="text" id="ai-menu-restaurant-name" placeholder="Ex: Outback, Madero, Restaurante da Esquina..." class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Cole o Cardápio ou opções que você gostaria de pedir</label>
+                    <textarea id="ai-menu-text" rows="3" placeholder="Ex: Costelinha com barbecue, filé de salmão, hambúrguer com batata, chopp..." class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"></textarea>
+                </div>
+            </div>
+
+            <button onclick="Restaurants.submitAiMenuAnalysis()" class="btn-purple-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition mb-3 hover:scale-105">
+                ✨ Analisar Cardápio com IA
+            </button>
+
+            <div id="ai-menu-loading" class="hidden py-4 text-center text-xs text-purple-700 font-semibold">
+                <span class="inline-block animate-spin mr-2">⚙️</span> A IA está analisando os pratos e calculando opções...
+            </div>
+
+            <div id="ai-menu-result-container" class="hidden overflow-y-auto max-h-64 pr-1"></div>
+        </div>
+    </div>
+
+    <!-- Canvas de Confetes da Gamificação -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Scripts da Aplicação (Ordem de Dependências) -->
+    <script src="/static/js/onboarding.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/streak.js"></script>
+    <script src="/static/js/family_battle.js"></script>
+    <script src="/static/js/meal_assistant.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/diary.js"></script>
+    <script src="/static/js/scanner.js"></script>
+    <script src="/static/js/cheat_day.js"></script>
+    <script src="/static/js/restaurants.js"></script>
+    <script src="/static/js/profile_charts.js"></script>
+</body>
+</html>

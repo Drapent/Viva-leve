@@ -119,6 +119,8 @@ const App = {
                 (typeof Streak !== 'undefined' && Streak.load) ? Streak.load() : null,
                 (typeof FamilyBattle !== 'undefined' && FamilyBattle.load) ? FamilyBattle.load() : null,
                 (typeof MealAssistant !== 'undefined' && MealAssistant.loadMenu) ? MealAssistant.loadMenu() : null,
+                (typeof Workout !== 'undefined' && Workout.loadWorkouts) ? Workout.loadWorkouts() : null,
+                (typeof Avatar !== 'undefined' && Avatar.load) ? Avatar.load() : null,
                 this.loadServerInfo()
             ]);
         } catch (error) {
@@ -230,6 +232,10 @@ const App = {
             if (typeof FamilyBattle !== 'undefined') FamilyBattle.load();
         } else if (tabId === 'restaurantes') {
             Restaurants.load();
+        } else if (tabId === 'treinos') {
+            if (typeof Workout !== 'undefined') Workout.loadWorkouts();
+        } else if (tabId === 'avatar') {
+            if (typeof Avatar !== 'undefined') Avatar.load();
         } else if (tabId === 'progresso') {
             ProfileCharts.load();
         }

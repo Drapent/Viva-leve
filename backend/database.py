@@ -247,6 +247,56 @@ def init_db():
     );
     """)
 
+    # Tabela de Treinos e Exercícios (Estilo Growth Supplements)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        duration_minutes INTEGER DEFAULT 45,
+        intensity TEXT DEFAULT 'moderado',
+        calories_burned REAL DEFAULT 300.0,
+        volume_kg REAL DEFAULT 0.0,
+        exercises_json TEXT NOT NULL DEFAULT '[]',
+        notes TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # Tabela de Fichas e Treinos Personalizados
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workout_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER DEFAULT 1,
+        name TEXT NOT NULL,
+        focus_area TEXT NOT NULL,
+        is_preset INTEGER DEFAULT 0,
+        exercises_json TEXT NOT NULL DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # Tabela de Avatar Evolutivo com Foto & Gamificação
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_avatar (
+        user_id INTEGER PRIMARY KEY,
+        photo_url TEXT DEFAULT '',
+        body_fat_visual INTEGER DEFAULT 20,
+        muscle_mass_visual INTEGER DEFAULT 50,
+        level INTEGER DEFAULT 1,
+        xp INTEGER DEFAULT 0,
+        coins INTEGER DEFAULT 100,
+        equipped_outfit TEXT DEFAULT 'regata_basica',
+        equipped_accessory TEXT DEFAULT 'shaker',
+        equipped_aura TEXT DEFAULT 'nenhuma',
+        unlocked_items_json TEXT DEFAULT '["regata_basica", "shaker"]',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+
     # Limpeza de usuários fictícios antigos das sementes de teste
     cursor.execute("DELETE FROM users WHERE email LIKE '%@familia.com'")
     cursor.execute("DELETE FROM user_points WHERE user_id NOT IN (SELECT id FROM users)")
@@ -293,6 +343,213 @@ def init_db():
             INSERT INTO cheat_settings (user_id, meals_per_week, daily_bank_kcal, cheat_mode_active, active_date)
             VALUES (1, 1, 200.0, 0, '')
         """)
+
+    # Migrações para campos adicionais do perfil (estilo de vida e personalização de dieta)
+    cursor.execute("PRAGMA table_info(user_profile)")
+    profile_cols = [row['name'] for row in cursor.fetchall()]
+    if 'meals_per_day' not in profile_cols:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN meals_per_day INTEGER DEFAULT 4")
+    if 'diet_style' not in profile_cols:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN diet_style TEXT DEFAULT 'padrao'")
+    if 'target_weight' not in profile_cols:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN target_weight REAL DEFAULT 70.0")
+
+    # Inserir Fichas de Treino Pré-definidas Estilo Growth se tabela estiver vazia
+    cursor.execute("SELECT COUNT(*) as count FROM workout_templates WHERE is_preset = 1")
+    if cursor.fetchone()["count"] == 0:
+        presets = [
+            ("Treino A - Peito, Tríceps & Ombros", "Peito e Tríceps", json.dumps([
+                {"name": "Supino Reto com Barra", "sets": 4, "reps": "8-12", "weight_kg": 40.0, "rest_sec": 90},
+                {"name": "Supino Inclinado com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 18.0, "rest_sec": 75},
+                {"name": "Crossover / Peck Deck", "sets": 3, "reps": "12-15", "weight_kg": 25.0, "rest_sec": 60},
+                {"name": "Desenvolvimento com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 14.0, "rest_sec": 75},
+                {"name": "Elevação Lateral", "sets": 4, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Tríceps Corda no Cross", "sets": 4, "reps": "10-12", "weight_kg": 20.0, "rest_sec": 60},
+                {"name": "Tríceps Testa", "sets": 3, "reps": "10-12", "weight_kg": 15.0, "rest_sec": 60}
+            ])),
+            ("Treino B - Costas, Bíceps & Abdômen", "Costas e Bíceps", json.dumps([
+                {"name": "Puxada Frontal Alta", "sets": 4, "reps": "8-12", "weight_kg": 45.0, "rest_sec": 90},
+                {"name": "Remada Baixa no Triângulo", "sets": 4, "reps": "10-12", "weight_kg": 40.0, "rest_sec": 75},
+                {"name": "Remada Curvada com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 16.0, "rest_sec": 75},
+                {"name": "Crucifixo Invertido", "sets": 3, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Rosca Direta com Barra W", "sets": 4, "reps": "10-12", "weight_kg": 20.0, "rest_sec": 60},
+                {"name": "Rosca Martelo com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 12.0, "rest_sec": 60},
+                {"name": "Abdominal Infra na Paralela", "sets": 3, "reps": "15-20", "weight_kg": 0.0, "rest_sec": 45}
+            ])),
+            ("Treino C - Pernas Completo (Quadríceps & Glúteos)", "Pernas", json.dumps([
+                {"name": "Agachamento Livre com Barra", "sets": 4, "reps": "8-10", "weight_kg": 50.0, "rest_sec": 120},
+                {"name": "Leg Press 45º", "sets": 4, "reps": "10-12", "weight_kg": 120.0, "rest_sec": 90},
+                {"name": "Cadeira Extensora", "sets": 3, "reps": "12-15", "weight_kg": 40.0, "rest_sec": 60},
+                {"name": "Mesa Flexora", "sets": 4, "reps": "10-12", "weight_kg": 35.0, "rest_sec": 60},
+                {"name": "Stiff com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 18.0, "rest_sec": 75},
+                {"name": "Panturrilha em Pé", "sets": 4, "reps": "15-20", "weight_kg": 45.0, "rest_sec": 45}
+            ])),
+            ("Treino D - Cardio & Core (Queima Calórica)", "Cardio e Abdômen", json.dumps([
+                {"name": "Esteira - Caminhada Inclinada / Trote", "sets": 1, "reps": "25 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Bicicleta Ergométrica HIIT", "sets": 1, "reps": "15 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Prancha Abdominal Isométrica", "sets": 3, "reps": "45 seg", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Abdominal Supra Remador", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45}
+            ])),
+            # Novos treinos adicionados
+            ("Treino E - Ombros & Trapézio (Delts & Traps)", "Ombros", json.dumps([
+                {"name": "Desenvolvimento Militar com Barra", "sets": 4, "reps": "8-10", "weight_kg": 30.0, "rest_sec": 90},
+                {"name": "Elevação Lateral com Halteres", "sets": 4, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Elevação Frontal com Halteres", "sets": 3, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Crucifixo Invertido (Posterior)", "sets": 4, "reps": "12-15", "weight_kg": 10.0, "rest_sec": 60},
+                {"name": "Ento com Barra (Trapézio)", "sets": 4, "reps": "10-12", "weight_kg": 40.0, "rest_sec": 75},
+                {"name": "Face Pull na Polia", "sets": 3, "reps": "15-20", "weight_kg": 15.0, "rest_sec": 60},
+                {"name": "Ento com Halteres", "sets": 3, "reps": "12-15", "weight_kg": 12.0, "rest_sec": 60}
+            ])),
+            ("Treino F - Bíceps & Tríceps (Braços)", "Braços", json.dumps([
+                {"name": "Rosca Direta com Barra", "sets": 4, "reps": "8-12", "weight_kg": 20.0, "rest_sec": 75},
+                {"name": "Rosca Alternada com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 10.0, "rest_sec": 60},
+                {"name": "Rosca Scott na Polia", "sets": 3, "reps": "12-15", "weight_kg": 15.0, "rest_sec": 60},
+                {"name": "Rosca Martelo com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 10.0, "rest_sec": 60},
+                {"name": "Tríceps Corda no Cross", "sets": 4, "reps": "10-12", "weight_kg": 20.0, "rest_sec": 60},
+                {"name": "Tríceps Testa com Barra", "sets": 3, "reps": "10-12", "weight_kg": 15.0, "rest_sec": 60},
+                {"name": "Tríceps Francês com Halteres", "sets": 3, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Mergulho entre Bancos (Tríceps)", "sets": 3, "reps": "12-15", "weight_kg": 0.0, "rest_sec": 60}
+            ])),
+            ("Treino G - Costas & Ombros (Costas & Delts)", "Costas e Ombros", json.dumps([
+                {"name": "Puxada Frontal Alta", "sets": 4, "reps": "8-12", "weight_kg": 45.0, "rest_sec": 90},
+                {"name": "Remada Curvada com Barra", "sets": 4, "reps": "8-10", "weight_kg": 40.0, "rest_sec": 90},
+                {"name": "Remada Unilateral com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 16.0, "rest_sec": 75},
+                {"name": "Puxada com Triângulo (Close Grip)", "sets": 3, "reps": "10-12", "weight_kg": 35.0, "rest_sec": 75},
+                {"name": "Desenvolvimento com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 14.0, "rest_sec": 75},
+                {"name": "Elevação Lateral", "sets": 4, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Crucifixo Invertido", "sets": 3, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60},
+                {"name": "Face Pull na Polia", "sets": 3, "reps": "15-20", "weight_kg": 15.0, "rest_sec": 60}
+            ])),
+            ("Treino H - Pernas & Glúteos (Legs & Glutes)", "Pernas e Glúteos", json.dumps([
+                {"name": "Agachamento Livre com Barra", "sets": 4, "reps": "8-10", "weight_kg": 50.0, "rest_sec": 120},
+                {"name": "Leg Press 45º", "sets": 4, "reps": "10-12", "weight_kg": 120.0, "rest_sec": 90},
+                {"name": "Cadeira Extensora", "sets": 3, "reps": "12-15", "weight_kg": 40.0, "rest_sec": 60},
+                {"name": "Mesa Flexora", "sets": 4, "reps": "10-12", "weight_kg": 35.0, "rest_sec": 60},
+                {"name": "Stiff com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 18.0, "rest_sec": 75},
+                {"name": "Cadeira Adutora", "sets": 3, "reps": "12-15", "weight_kg": 30.0, "rest_sec": 60},
+                {"name": "Cadeira Abdutora", "sets": 3, "reps": "12-15", "weight_kg": 30.0, "rest_sec": 60},
+                {"name": "Panturrilha em Pé", "sets": 4, "reps": "15-20", "weight_kg": 45.0, "rest_sec": 45},
+                {"name": "Panturrilha Sentado", "sets": 4, "reps": "15-20", "weight_kg": 35.0, "rest_sec": 45}
+            ])),
+            ("Treino I - Peito & Costas (Push & Pull)", "Peito e Costas", json.dumps([
+                {"name": "Supino Reto com Barra", "sets": 4, "reps": "8-12", "weight_kg": 40.0, "rest_sec": 90},
+                {"name": "Puxada Frontal Alta", "sets": 4, "reps": "8-12", "weight_kg": 45.0, "rest_sec": 90},
+                {"name": "Supino Inclinado com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 18.0, "rest_sec": 75},
+                {"name": "Remada Baixa no Triângulo", "sets": 4, "reps": "10-12", "weight_kg": 40.0, "rest_sec": 75},
+                {"name": "Crossover / Peck Deck", "sets": 3, "reps": "12-15", "weight_kg": 25.0, "rest_sec": 60},
+                {"name": "Remada Curvada com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 16.0, "rest_sec": 75},
+                {"name": "Desenvolvimento com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 14.0, "rest_sec": 75},
+                {"name": "Crucifixo Invertido", "sets": 3, "reps": "12-15", "weight_kg": 8.0, "rest_sec": 60}
+            ])),
+            ("Treino J - Full Body (Corpo Inteiro)", "Full Body", json.dumps([
+                {"name": "Agachamento Livre com Barra", "sets": 4, "reps": "8-10", "weight_kg": 50.0, "rest_sec": 120},
+                {"name": "Supino Reto com Barra", "sets": 4, "reps": "8-12", "weight_kg": 40.0, "rest_sec": 90},
+                {"name": "Remada Curvada com Barra", "sets": 4, "reps": "8-10", "weight_kg": 40.0, "rest_sec": 90},
+                {"name": "Desenvolvimento com Halteres", "sets": 3, "reps": "10-12", "weight_kg": 14.0, "rest_sec": 75},
+                {"name": "Leg Press 45º", "sets": 4, "reps": "10-12", "weight_kg": 120.0, "rest_sec": 90},
+                {"name": "Puxada Frontal Alta", "sets": 4, "reps": "8-12", "weight_kg": 45.0, "rest_sec": 90},
+                {"name": "Cadeira Extensora", "sets": 3, "reps": "12-15", "weight_kg": 40.0, "rest_sec": 60},
+                {"name": "Mesa Flexora", "sets": 4, "reps": "10-12", "weight_kg": 35.0, "rest_sec": 60},
+                {"name": "Rosca Direta com Barra", "sets": 3, "reps": "10-12", "weight_kg": 20.0, "rest_sec": 60},
+                {"name": "Tríceps Corda no Cross", "sets": 3, "reps": "10-12", "weight_kg": 20.0, "rest_sec": 60},
+                {"name": "Panturrilha em Pé", "sets": 4, "reps": "15-20", "weight_kg": 45.0, "rest_sec": 45}
+            ])),
+            ("Treino K - HIIT & Cardio (Queima de Gordura)", "HIIT e Cardio", json.dumps([
+                {"name": "Esteira - Corrida Intervalada", "sets": 1, "reps": "20 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Bicicleta Ergométrica HIIT", "sets": 1, "reps": "15 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Polichinelos", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Burpees", "sets": 3, "reps": "15 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Mountain Climbers", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Pular Corda", "sets": 3, "reps": "2 min", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Abdominal Supra Remador", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Prancha Abdominal Isométrica", "sets": 3, "reps": "45 seg", "weight_kg": 0.0, "rest_sec": 45}
+            ])),
+            ("Treino L - Yoga & Mobilidade (Flexibilidade)", "Yoga e Mobilidade", json.dumps([
+                {"name": "Saudação ao Sol (Surya Namaskar)", "sets": 5, "reps": "1 ciclo", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Postura do Guerreiro I", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Postura do Guerreiro II", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Postura do Triângulo", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Postura do Cachorro Olhando para Baixo", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Postura da Criança", "sets": 3, "reps": "1 min", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Postura do Lótus (Meditação)", "sets": 1, "reps": "10 min", "weight_kg": 0.0, "rest_sec": 0}
+            ])),
+            ("Treino M - Funcional (Treino Funcional)", "Funcional", json.dumps([
+                {"name": "Agachamento com Salto", "sets": 4, "reps": "12-15", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Flexão de Braço", "sets": 4, "reps": "12-15", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Afundo Alternado", "sets": 3, "reps": "12 cada", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Prancha com Toque no Ombro", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Abdominal Bicicleta", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Mountain Climbers", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Burpees", "sets": 3, "reps": "15 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Polichinelos", "sets": 3, "reps": "30 seg", "weight_kg": 0.0, "rest_sec": 30}
+            ])),
+            ("Treino N - Calistenia (Peso Corporal)", "Calistenia", json.dumps([
+                {"name": "Flexão de Braço", "sets": 4, "reps": "12-15", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Agachamento Livre", "sets": 4, "reps": "15-20", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Afundo Alternado", "sets": 3, "reps": "12 cada", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Prancha Abdominal Isométrica", "sets": 3, "reps": "45 seg", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Abdominal Supra Remador", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Abdominal Infra na Paralela", "sets": 3, "reps": "15-20", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Mergulho entre Bancos (Tríceps)", "sets": 3, "reps": "12-15", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Barra Fixa (ou Assistida)", "sets": 3, "reps": "8-12", "weight_kg": 0.0, "rest_sec": 90}
+            ])),
+            ("Treino O - Pilates (Core & Controle)", "Pilates", json.dumps([
+                {"name": "The Hundred (Cem)", "sets": 1, "reps": "100 reps", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Roll Up (Rolamento)", "sets": 3, "reps": "10 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Single Leg Stretch (Alongamento de Perna)", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Double Leg Stretch (Alongamento Duplo)", "sets": 3, "reps": "10 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Scissors (Tesoura)", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Shoulder Bridge (Ponte de Ombros)", "sets": 3, "reps": "10 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Swan (Cisne)", "sets": 3, "reps": "10 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Side Leg Lifts (Elevação Lateral de Perna)", "sets": 3, "reps": "15 reps", "weight_kg": 0.0, "rest_sec": 45}
+            ])),
+            ("Treino P - CrossFit (WOD)", "CrossFit", json.dumps([
+                {"name": "Wall Balls (Bolas na Parede)", "sets": 4, "reps": "15 reps", "weight_kg": 6.0, "rest_sec": 60},
+                {"name": "Box Jumps (Saltos na Caixa)", "sets": 4, "reps": "12 reps", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Kettlebell Swings", "sets": 4, "reps": "15 reps", "weight_kg": 16.0, "rest_sec": 60},
+                {"name": "Burpees", "sets": 4, "reps": "15 reps", "weight_kg": 0.0, "rest_sec": 45},
+                {"name": "Thrusters (Arremesso)", "sets": 4, "reps": "12 reps", "weight_kg": 25.0, "rest_sec": 75},
+                {"name": "Pull-ups (Barra Fixa)", "sets": 4, "reps": "8-12", "weight_kg": 0.0, "rest_sec": 90},
+                {"name": "Double Unders (Pular Corda Duplo)", "sets": 3, "reps": "50 reps", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Sit-ups (Abdominais)", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 45}
+            ])),
+            ("Treino Q - Natação (Swimming)", "Natação", json.dumps([
+                {"name": "Nado Crawl", "sets": 4, "reps": "50m", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Nado Costas", "sets": 4, "reps": "50m", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Nado Peito", "sets": 4, "reps": "50m", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Nado Borboleta", "sets": 2, "reps": "25m", "weight_kg": 0.0, "rest_sec": 90},
+                {"name": "Travessia Contínua", "sets": 1, "reps": "20 min", "weight_kg": 0.0, "rest_sec": 0}
+            ])),
+            ("Treino R - Corrida (Running)", "Corrida", json.dumps([
+                {"name": "Aquecimento - Caminhada", "sets": 1, "reps": "5 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Trote Leve", "sets": 1, "reps": "10 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Corrida Moderada", "sets": 1, "reps": "20 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Sprint Intervalado", "sets": 4, "reps": "1 min", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Desaceleração - Caminhada", "sets": 1, "reps": "5 min", "weight_kg": 0.0, "rest_sec": 0}
+            ])),
+            ("Treino S - Ciclismo (Cycling)", "Ciclismo", json.dumps([
+                {"name": "Aquecimento - Pedalada Leve", "sets": 1, "reps": "10 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Pedalada Moderada", "sets": 1, "reps": "30 min", "weight_kg": 0.0, "rest_sec": 0},
+                {"name": "Subida (Alta Cadência)", "sets": 4, "reps": "5 min", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Sprint Final", "sets": 2, "reps": "1 min", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Desaceleração - Pedalada Leve", "sets": 1, "reps": "5 min", "weight_kg": 0.0, "rest_sec": 0}
+            ])),
+            ("Treino T - Artes Marciais (Luta)", "Artes Marciais", json.dumps([
+                {"name": "Aquecimento - Polichinelos", "sets": 3, "reps": "1 min", "weight_kg": 0.0, "rest_sec": 30},
+                {"name": "Sombra (Shadow Boxing)", "sets": 3, "reps": "3 min", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Jab & Cross", "sets": 4, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Hook & Uppercut", "sets": 4, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Kicks (Chutes)", "sets": 4, "reps": "15 reps", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Defesa (Esquivas)", "sets": 3, "reps": "20 reps", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Mancinho (Saco de Pancadas)", "sets": 3, "reps": "3 min", "weight_kg": 0.0, "rest_sec": 60},
+                {"name": "Alongamento Final", "sets": 1, "reps": "5 min", "weight_kg": 0.0, "rest_sec": 0}
+            ]))
+        ]
+        for name, focus, ex_json in presets:
+            cursor.execute("""
+                INSERT INTO workout_templates (user_id, name, focus_area, is_preset, exercises_json)
+                VALUES (1, ?, ?, 1, ?)
+            """, (name, focus, ex_json))
 
     conn.commit()
     conn.close()

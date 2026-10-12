@@ -4,36 +4,52 @@ from typing import Optional, Dict, Any, List
 from database import get_connection
 
 MISSION_TEMPLATES = [
-    {
-        "key": "prato_colorido",
-        "title": "🌈 Prato Colorido",
-        "description": "Coma pelo menos 2 vegetais ou folhas verdes no almoço ou jantar.",
-        "points": 20
-    },
-    {
-        "key": "meta_agua",
-        "title": "💧 Hidratação Campeã",
-        "description": "Beba 2.000ml ou mais de água durante o dia.",
-        "points": 25
-    },
-    {
-        "key": "scanner_ia",
-        "title": "📸 Raio-X Nutricional",
-        "description": "Analise uma refeição usando o Scanner de Foto com IA.",
-        "points": 20
-    },
-    {
-        "key": "proteina_alta",
-        "title": "💪 Super Proteína",
-        "description": "Consuma uma refeição nutritiva com pelo menos 30g de proteína.",
-        "points": 20
-    },
-    {
-        "key": "diario_completo",
-        "title": "📝 Diário Exemplar",
-        "description": "Registre pelo menos 3 refeições completas no seu diário hoje.",
-        "points": 30
-    }
+    {"key": "prato_colorido", "title": "Prato Colorido", "description": "Coma pelo menos 2 vegetais ou folhas verdes no almoço ou jantar.", "points": 20},
+    {"key": "meta_agua", "title": "Hidratacao Campea", "description": "Beba 2.000ml ou mais de agua durante o dia.", "points": 25},
+    {"key": "scanner_ia", "title": "Raio-X Nutricional", "description": "Analise uma refeicao usando o Scanner de Foto com IA.", "points": 20},
+    {"key": "proteina_alta", "title": "Super Proteina", "description": "Consuma uma refeicao nutritiva com pelo menos 30g de proteina.", "points": 20},
+    {"key": "diario_completo", "title": "Diario Exemplar", "description": "Registre pelo menos 3 refeicoes completas no seu diario hoje.", "points": 30},
+    {"key": "meta_calorias", "title": "Na Mosca", "description": "Fique dentro da sua meta calorica diaria (ate 100 kcal de tolerancia).", "points": 25},
+    {"key": "treino_feito", "title": "Treino Concluido", "description": "Complete um treino hoje e registre no app.", "points": 40},
+    {"key": "registrar_peso", "title": "Peso em Dia", "description": "Registre seu peso hoje para acompanhar sua evolucao.", "points": 15},
+    {"key": "cafe_saudavel", "title": "Cafe da Manha Saudavel", "description": "Registre um cafe da manha com pelo menos 15g de proteina.", "points": 20},
+    {"key": "almoco_colorido", "title": "Almoco Colorido", "description": "Faca um almoco com 3 cores diferentes de vegetais.", "points": 20},
+    {"key": "jantar_leve", "title": "Jantar Leve", "description": "Faca um jantar com menos de 500 kcal.", "points": 20},
+    {"key": "lanche_saudavel", "title": "Lanche Saudavel", "description": "Escolha um lanche com frutas ou oleaginosas.", "points": 15},
+    {"key": "sem_refrigerante", "title": "Sem Refrigerante", "description": "Fique o dia todo sem beber refrigerante.", "points": 25},
+    {"key": "agua_antes_refeicao", "title": "Agua Antes de Comer", "description": "Beba 1 copo de agua 30 min antes do almoco ou jantar.", "points": 15},
+    {"key": "parar_comida", "title": "Parar de Comer", "description": "Pare de comer quando estiver satisfeito (80% cheio).", "points": 20},
+    {"key": "mastigar_bem", "title": "Mastigar Bem", "description": "Mastigue cada garfada pelo menos 20 vezes.", "points": 15},
+    {"key": "sem_sobremesa", "title": "Sem Sobremesa", "description": "Fique o dia todo sem sobremesas acucaradas.", "points": 25},
+    {"key": "fruta_no_lanche", "title": "Fruta no Lanche", "description": "Coma pelo menos 1 fruta no lanche da tarde.", "points": 15},
+    {"key": "proteina_no_cafe", "title": "Proteina no Cafe", "description": "Inclua proteina no cafe da manha (ovos, iogurte, queijo).", "points": 20},
+    {"key": "comida_caseira", "title": "Comida Caseira", "description": "Faca pelo menos 1 refeicao caseira hoje.", "points": 20},
+    {"key": "sem_fast_food", "title": "Sem Fast Food", "description": "Fique o dia todo sem comer fast food.", "points": 30},
+    {"key": "verdura_no_almoco", "title": "Verdura no Almoco", "description": "Inclua verduras folhosas no almoco.", "points": 15},
+    {"key": "legume_no_jantar", "title": "Legume no Jantar", "description": "Inclua legumes cozidos no jantar.", "points": 15},
+    {"key": "sem_acucar", "title": "Sem Acucar", "description": "Fique o dia todo sem adicionar acucar nas bebidas.", "points": 25},
+    {"key": "cha_verde", "title": "Cha Verde", "description": "Beba pelo menos 1 xicara de cha verde sem acucar.", "points": 15},
+    {"key": "alongamento", "title": "Alongamento", "description": "Faca pelo menos 10 minutos de alongamento hoje.", "points": 20},
+    {"key": "caminhada", "title": "Caminhada", "description": "Caminhe pelo menos 30 minutos hoje.", "points": 25},
+    {"key": "dormir_bem", "title": "Dormir Bem", "description": "Durma pelo menos 7 horas esta noite.", "points": 20},
+    {"key": "acordar_cedo", "title": "Acordar Cedo", "description": "Acorde antes das 7h da manha.", "points": 20},
+    {"key": "sem_celular_mesa", "title": "Sem Celular a Mesa", "description": "Nao use o celular durante as refeicoes.", "points": 25},
+    {"key": "cozinhar_em_casa", "title": "Cozinhar em Casa", "description": "Cozinhe pelo menos 1 refeicao em casa hoje.", "points": 20},
+    {"key": "planejar_refeicao", "title": "Planejar Refeicao", "description": "Planeje sua proxima refeicao com antecedencia.", "points": 15},
+    {"key": "comer_devagar", "title": "Comer Devagar", "description": "Coma pelo menos 1 refeicao em mais de 20 minutos.", "points": 20},
+    {"key": "sem_snacks", "title": "Sem Snacks", "description": "Fique o dia todo sem comer snacks industrializados.", "points": 25},
+    {"key": "proteina_em_todas", "title": "Proteina em Todas", "description": "Inclua proteina em todas as refeicoes do dia.", "points": 30},
+    {"key": "carboidrato_bom", "title": "Carboidrato Bom", "description": "Escolha carboidratos integrais ou naturais (batata doce, mandioca).", "points": 20},
+    {"key": "gordura_boa", "title": "Gordura Boa", "description": "Inclua gorduras boas (abacate, azeite, castanhas).", "points": 15},
+    {"key": "fibra_alta", "title": "Fibra Alta", "description": "Consuma pelo menos 10g de fibras em uma refeicao.", "points": 20},
+    {"key": "sem_alcool", "title": "Sem Alcool", "description": "Fique o dia todo sem beber alcool.", "points": 30},
+    {"key": "feijao_todos_dias", "title": "Feijao Todos os Dias", "description": "Coma feijao pelo menos 1 vez hoje.", "points": 20},
+    {"key": "carne_magra", "title": "Carne Magra", "description": "Escolha carne magra (frango, peixe, patinho).", "points": 20},
+    {"key": "peixe", "title": "Peixe", "description": "Coma peixe pelo menos 1 vez hoje.", "points": 25},
+    {"key": "sem_carne", "title": "Sem Carne", "description": "Fique o dia todo sem comer carne.", "points": 25},
+    {"key": "pao_integral", "title": "Pao Integral", "description": "Escolha pao integral no lugar do pao branco.", "points": 15},
+    {"key": "arroz_integral", "title": "Arroz Integral", "description": "Escolha arroz integral no lugar do branco.", "points": 15},
+    {"key": "sem_sal_extra", "title": "Sem Sal Extra", "description": "Nao adicione sal extra nos alimentos.", "points": 20}
 ]
 
 def get_week_range(target_date: Optional[datetime] = None) -> tuple[str, str, str, int]:
@@ -222,7 +238,11 @@ def get_or_generate_missions(user_id: int, date_str: Optional[str] = None) -> Li
     rows = cursor.fetchall()
 
     if not rows:
-        selected = MISSION_TEMPLATES[:3]
+        # Selecionar 3 missões aleatórias baseadas no dia do ano (varia a cada dia)
+        import random
+        day_of_year = datetime.strptime(today, "%Y-%m-%d").timetuple().tm_yday
+        random.seed(day_of_year + user_id)  # Mesmo dia = mesmas missões para o mesmo usuário
+        selected = random.sample(MISSION_TEMPLATES, min(3, len(MISSION_TEMPLATES)))
         for tmpl in selected:
             cursor.execute("""
                 INSERT INTO user_missions (user_id, date, mission_key, title, description, points, completed)

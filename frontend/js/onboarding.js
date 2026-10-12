@@ -171,11 +171,26 @@ const Onboarding = {
         } else if (this.step === 4) {
             const targetWeightInput = document.getElementById('quiz-target-weight');
             const twVal = parseFloat(targetWeightInput?.value);
-            if (twVal && twVal > 30 && twVal < 300) {
+            if (this.data.goal === 'manter') {
+                this.data.target_weight = this.data.weight;
+            } else if (twVal && twVal > 30 && twVal < 300) {
+                if (this.data.goal === 'emagrecer' && twVal >= this.data.weight) {
+                    App.showToast("Para emagrecer, o peso-meta precisa ser menor que o seu peso atual.", "warning");
+                    return;
+                }
+                if (this.data.goal === 'hipertrofia' && twVal <= this.data.weight) {
+                    App.showToast("Para ganhar massa, o peso-meta precisa ser maior que o seu peso atual.", "warning");
+                    return;
+                }
                 this.data.target_weight = twVal;
             } else {
                 this.data.target_weight = this.data.weight;
             }
+        } else if (this.step === 5) {
+            const mealsEl = document.getElementById('quiz-meals-per-day');
+            const styleEl = document.getElementById('quiz-diet-style');
+            this.data.meals_per_day = parseInt(mealsEl?.value, 10) || 4;
+            this.data.diet_style = styleEl?.value || 'padrao';
         }
 
         if (typeof App !== 'undefined' && App.playSound) App.playSound('click');
@@ -192,6 +207,10 @@ const Onboarding = {
                 btn.className = "quiz-goal-btn flex items-center gap-4 p-4 rounded-3xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all";
             }
         });
+        // Se já estiver na etapa 4, atualizar as opções de ritmo imediatamente
+        if (this.step === 4) {
+            this.adjustPaceOptionsForGoal();
+        }
         if (typeof App !== 'undefined' && App.playSound) App.playSound('click');
     },
 
@@ -240,20 +259,132 @@ const Onboarding = {
         const paceTitle = document.getElementById('quiz-pace-title');
         const paceDesc = document.getElementById('quiz-pace-description');
         const targetWeightContainer = document.getElementById('quiz-target-weight-container');
+        const container = document.getElementById('quiz-pace-cards-container');
+
+        let cardsHtml = '';
+        const currentPace = this.data.pace || 'moderado';
 
         if (this.data.goal === 'emagrecer') {
             if (paceTitle) paceTitle.textContent = "Ritmo do Déficit Calórico:";
             if (paceDesc) paceDesc.textContent = "Escolha a velocidade com que deseja perder gordura com saúde.";
             if (targetWeightContainer) targetWeightContainer.classList.remove('hidden');
+
+            cardsHtml = `
+                <div data-pace="suave" onclick="Onboarding.selectPace('suave')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'suave' ? 'border-emerald-500 bg-emerald-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-emerald-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-emerald-50 rounded-xl">🌱</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Suave & Sustentável</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">-300 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.3 kg por semana. Muito fácil de manter sem passar fome.</p>
+                    </div>
+                </div>
+
+                <div data-pace="moderado" onclick="Onboarding.selectPace('moderado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'moderado' ? 'border-emerald-500 bg-emerald-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-emerald-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-teal-50 rounded-xl">🎯</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Moderado (Recomendado)</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">-500 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.5 kg por semana. O padrão ouro dos nutricionistas.</p>
+                    </div>
+                </div>
+
+                <div data-pace="acelerado" onclick="Onboarding.selectPace('acelerado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'acelerado' ? 'border-emerald-500 bg-emerald-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-emerald-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-amber-50 rounded-xl">⚡</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Acelerado & Focado</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">-750 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.75 kg por semana. Requer foco total e mais disciplina.</p>
+                    </div>
+                </div>
+            `;
         } else if (this.data.goal === 'hipertrofia') {
-            if (paceTitle) paceTitle.textContent = "Ritmo do Superávit Muscular:";
-            if (paceDesc) paceDesc.textContent = "Escolha o ritmo de ganho de massa magra sem acúmulo excessivo de gordura.";
+            if (paceTitle) paceTitle.textContent = "Ritmo do Ganho de Massa Muscular (Bulking):";
+            if (paceDesc) paceDesc.textContent = "Escolha o ritmo de superávit para construir músculos com o mínimo de gordura.";
             if (targetWeightContainer) targetWeightContainer.classList.remove('hidden');
+
+            cardsHtml = `
+                <div data-pace="moderado" onclick="Onboarding.selectPace('moderado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'moderado' ? 'border-purple-500 bg-purple-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-purple-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-purple-100 rounded-xl">🥩</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Bulking Limpo (Recomendado)</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">+450 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Ganho sólido de ~0.4 a 0.5 kg por semana com força e hipertrofia de qualidade.</p>
+                    </div>
+                </div>
+
+                <div data-pace="suave" onclick="Onboarding.selectPace('suave')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'suave' ? 'border-purple-500 bg-purple-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-purple-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-emerald-50 rounded-xl">🌱</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Hipertrofia Gradual</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">+300 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Ganho seco de ~0.25 a 0.3 kg por semana com retenção quase nula de gordura.</p>
+                    </div>
+                </div>
+
+                <div data-pace="acelerado" onclick="Onboarding.selectPace('acelerado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'acelerado' ? 'border-purple-500 bg-purple-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-purple-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-amber-50 rounded-xl">🚀</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Bulking Acelerado (Pesado)</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">+650 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Para quem tem metabolismo muito rápido (ectomorfo) e dificuldade de ganhar peso.</p>
+                    </div>
+                </div>
+            `;
         } else {
-            if (paceTitle) paceTitle.textContent = "Manutenção do Peso:";
-            if (paceDesc) paceDesc.textContent = "Seu plano manterá seu peso estável com equilíbrio metabólico.";
+            // MANUTENÇÃO - Nunca mostrar déficit calórico aqui!
+            if (paceTitle) paceTitle.textContent = "Equilíbrio Metabólico & Manutenção:";
+            if (paceDesc) paceDesc.textContent = "Seu plano manterá seu peso estável com máxima energia e saúde celular.";
             if (targetWeightContainer) targetWeightContainer.classList.add('hidden');
+
+            cardsHtml = `
+                <div data-pace="moderado" onclick="Onboarding.selectPace('moderado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'moderado' ? 'border-cyan-500 bg-cyan-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-cyan-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-cyan-100 rounded-xl">⚖️</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Manutenção Pura (Recomendado)</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800">0 kcal (Equilíbrio)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Consumo igual ao gasto exato. Peso 100% estável, longevidade e equilíbrio hormonal.</p>
+                    </div>
+                </div>
+
+                <div data-pace="suave" onclick="Onboarding.selectPace('suave')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'suave' ? 'border-cyan-500 bg-cyan-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-cyan-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-emerald-50 rounded-xl">🔥</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Recomposição Corporal Suave</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">-150 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Queima gordura residual aos poucos preservando 100% da sua musculatura.</p>
+                    </div>
+                </div>
+
+                <div data-pace="acelerado" onclick="Onboarding.selectPace('acelerado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 ${currentPace === 'acelerado' ? 'border-cyan-500 bg-cyan-50/80 shadow-md scale-[1.02]' : 'border-slate-100 hover:border-cyan-200 bg-white shadow-sm'} transition-all cursor-pointer">
+                    <span class="text-2xl p-2 bg-blue-50 rounded-xl">💪</span>
+                    <div class="text-left flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-black text-slate-800 text-xs">Tônus & Densidade Muscular</h4>
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">+150 kcal/dia</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Pequeno aporte energético para melhorar força nos treinos sem aumentar o peso.</p>
+                    </div>
+                </div>
+            `;
         }
+
+        if (container) container.innerHTML = cardsHtml;
     },
 
     updateBmiPreview() {
@@ -334,16 +465,17 @@ const Onboarding = {
             const bmr = isF ? (10 * w) + (6.25 * h) - (5 * a) - 161 : (10 * w) + (6.25 * h) - (5 * a) + 5;
             const mults = { sedentario: 1.2, leve: 1.375, moderado: 1.55, intenso: 1.725 };
             const tdee = Math.round(bmr * (mults[this.data.activity_level] || 1.55));
-            let calDiff = -500;
-            if (this.data.goal === 'emagrecer') {
-                calDiff = this.data.pace === 'suave' ? -300 : (this.data.pace === 'acelerado' ? -750 : -500);
-            } else if (this.data.goal === 'hipertrofia') {
-                calDiff = this.data.pace === 'suave' ? 250 : (this.data.pace === 'acelerado' ? 600 : 400);
-            } else {
-                calDiff = 0;
-            }
-            const targetCal = Math.max(1200, tdee + calDiff);
-            const p = Math.round(w * (this.data.goal === 'emagrecer' ? 2.0 : 1.8));
+            const pace = this.data.pace || 'moderado';
+            const tables = {
+                emagrecer: { suave: -300, moderado: -500, acelerado: -750 },
+                hipertrofia: { suave: 300, moderado: 450, acelerado: 650 },
+                manter: { suave: -150, moderado: 0, acelerado: 150 }
+            };
+            const calDiff = (tables[this.data.goal] || tables.manter)[pace] ?? 0;
+            const minCal = isF ? 1200 : 1400;
+            const targetCal = Math.max(minCal, tdee + calDiff);
+            const pMult = this.data.goal === 'emagrecer' ? 2.0 : (this.data.goal === 'hipertrofia' ? 2.2 : 1.8);
+            const p = Math.round(w * pMult);
             const f = Math.round(w * 0.85);
             const c = Math.round(Math.max(200, targetCal - (p * 4 + f * 9)) / 4);
             const water = Math.round(w * 38);
@@ -351,6 +483,7 @@ const Onboarding = {
             calc = {
                 bmr: Math.round(bmr),
                 tdee: tdee,
+                activity_burn: Math.round(tdee - bmr),
                 cal_diff: calDiff,
                 target_calories: targetCal,
                 target_protein: p,
@@ -373,19 +506,30 @@ const Onboarding = {
         const cEl = document.getElementById('plan-carbs-val');
         const fEl = document.getElementById('plan-fat-val');
         const waterEl = document.getElementById('plan-water-val');
+        const breakdownEl = document.getElementById('plan-energy-breakdown');
 
         if (bmrEl) bmrEl.textContent = `${calc.bmr} kcal`;
         if (tdeeEl) tdeeEl.textContent = `${calc.tdee} kcal`;
+        if (breakdownEl) {
+            const actBurn = calc.activity_burn ?? (calc.tdee - calc.bmr);
+            breakdownEl.innerHTML = `
+                <p class="font-black text-slate-700 text-[11px] mb-1">🔬 Como chegamos no seu número</p>
+                <p>🫀 <b>Gasto basal (TMB): ${calc.bmr} kcal</b> — o que seu corpo gasta parado 24h (respirar, coração, órgãos). Fórmula Mifflin-St Jeor.</p>
+                <p>🏃 <b>Gasto com atividades: +${actBurn} kcal</b> — movimento do dia e treinos (fator de atividade).</p>
+                <p>🎯 <b>Ajuste do objetivo: ${calc.cal_diff > 0 ? '+' : ''}${calc.cal_diff} kcal</b> → meta de <b>${calc.target_calories} kcal/dia</b>.</p>
+                <p class="text-slate-400 mt-1">Treinos lançados na aba Treinos somam calorias extras ao seu dia.</p>
+            `;
+        }
         if (deficitEl) {
             if (calc.cal_diff < 0) {
                 deficitEl.textContent = `${calc.cal_diff} kcal (Déficit)`;
-                deficitEl.className = "text-sm font-black text-rose-600";
+                deficitEl.className = "font-black text-xs px-2 py-0.5 rounded-full bg-white/20";
             } else if (calc.cal_diff > 0) {
                 deficitEl.textContent = `+${calc.cal_diff} kcal (Superávit)`;
-                deficitEl.className = "text-sm font-black text-emerald-600";
+                deficitEl.className = "font-black text-xs px-2 py-0.5 rounded-full bg-white/20";
             } else {
-                deficitEl.textContent = `Equilíbrio Neutro`;
-                deficitEl.className = "text-sm font-black text-cyan-600";
+                deficitEl.textContent = `Equilíbrio (0 kcal)`;
+                deficitEl.className = "font-black text-xs px-2 py-0.5 rounded-full bg-white/20";
             }
         }
 

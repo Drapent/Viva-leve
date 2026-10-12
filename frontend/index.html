@@ -750,6 +750,215 @@
             <div id="menu-assistant-content"></div>
         </section>
 
+        <!-- ==================== ABA: TREINOS ==================== -->
+        <section id="tab-treinos" class="tab-content hidden space-y-6">
+            <!-- Banner de Treinos -->
+            <div class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-purple-500/20">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-2xl">🏋️</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">Treinos Estilo Growth</span>
+                </div>
+                <h2 class="text-lg sm:text-xl font-black tracking-tight leading-tight">Central de Treinos</h2>
+                <p class="text-xs text-purple-100 mt-1">
+                    Calcule seu gasto calórico com base científica (MET + EPOC), registre treinos e ganhe recompensas!
+                </p>
+            </div>
+
+            <!-- Treinos de Hoje -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>📅</span> Treinos de Hoje
+                    </h3>
+                    <button onclick="Workout.loadWorkouts()" class="text-xs font-bold text-violet-600 hover:text-purple-700 transition">
+                        Atualizar
+                    </button>
+                </div>
+                <div id="workouts-today-list" class="space-y-3">
+                    <div class="text-center py-8 text-slate-400">
+                        <span class="text-3xl block mb-2">🏋️</span>
+                        <p class="text-sm font-bold">Carregando treinos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registrar Treino -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-3">
+                    <span>➕</span> Registrar Treino
+                </h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Nome do Treino:</label>
+                        <input type="text" id="workout-name" placeholder="Ex: Treino A - Peito" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:border-violet-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Categoria:</label>
+                            <select id="workout-category" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:border-violet-500">
+                                <option value="musculacao">Musculação</option>
+                                <option value="corrida">Corrida</option>
+                                <option value="bike">Bicicleta</option>
+                                <option value="natacao">Natação</option>
+                                <option value="hiit">HIIT</option>
+                                <option value="crossfit">CrossFit</option>
+                                <option value="yoga">Yoga</option>
+                                <option value="pilates">Pilates</option>
+                                <option value="funcional">Funcional</option>
+                                <option value="calistenia">Calistenia</option>
+                                <option value="luta">Luta</option>
+                                <option value="esporte">Esporte</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Intensidade:</label>
+                            <select id="workout-intensity" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:border-violet-500">
+                                <option value="leve">Leve</option>
+                                <option value="moderado" selected>Moderada</option>
+                                <option value="intenso">Intensa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase block mb-1">Duração (minutos):</label>
+                        <input type="number" id="workout-duration" value="45" min="5" max="180" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:outline-none focus:border-violet-500">
+                    </div>
+                    <div id="workout-calories-preview" class="p-3 rounded-2xl bg-violet-50 border border-violet-200 text-sm font-bold text-violet-700">
+                        🔥 Gasto calórico estimado: <span id="workout-calories-val">350</span> kcal
+                    </div>
+                    <button onclick="Workout.logWorkout()" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-black rounded-2xl shadow-lg shadow-purple-500/30 transition hover:scale-[1.02]">
+                        💪 Registrar Treino
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fichas de Treino Disponíveis -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>📋</span> Fichas de Treino Disponíveis
+                    </h3>
+                    <span class="text-xs text-slate-400 font-bold" id="workout-templates-count">0 treinos</span>
+                </div>
+                <div id="workout-templates-list" class="space-y-2">
+                    <div class="text-center py-8 text-slate-400">
+                        <span class="text-3xl block mb-2">📋</span>
+                        <p class="text-sm font-bold">Carregando fichas...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico de Treinos -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-3">
+                    <span>📊</span> Histórico de Treinos
+                </h3>
+                <div id="workout-history-list" class="space-y-2">
+                    <div class="text-center py-8 text-slate-400">
+                        <span class="text-3xl block mb-2">📊</span>
+                        <p class="text-sm font-bold">Nenhum treino registrado ainda</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ABA: AVATAR ==================== -->
+        <section id="tab-avatar" class="tab-content hidden space-y-6">
+            <!-- Banner do Avatar -->
+            <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-orange-500/20">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-2xl">👤</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">Avatar Evolutivo</span>
+                </div>
+                <h2 class="text-lg sm:text-xl font-black tracking-tight leading-tight">Seu Avatar</h2>
+                <p class="text-xs text-amber-100 mt-1">
+                    Complete missões e treinos para evoluir seu avatar! Ele muda conforme seu progresso real.
+                </p>
+            </div>
+
+            <!-- Card do Avatar -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex flex-col items-center">
+                    <!-- Foto do Avatar -->
+                    <div class="relative mb-4">
+                        <div id="avatar-photo-container" class="w-32 h-32 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-5xl overflow-hidden border-4 border-white shadow-lg">
+                            <span id="avatar-photo-placeholder">👤</span>
+                            <img id="avatar-photo-img" src="" alt="Avatar" class="hidden w-full h-full object-cover">
+                        </div>
+                        <button onclick="Avatar.uploadPhoto()" class="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg flex items-center justify-center text-lg hover:scale-110 transition">
+                            📷
+                        </button>
+                    </div>
+
+                    <!-- Nível e XP -->
+                    <div class="text-center mb-4">
+                        <div class="flex items-center justify-center gap-2 mb-1">
+                            <span class="px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black">
+                                Nível <span id="avatar-level">1</span>
+                            </span>
+                            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black">
+                                💰 <span id="avatar-coins">100</span> moedas
+                            </span>
+                        </div>
+                        <div class="w-48 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div id="avatar-xp-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1">
+                            <span id="avatar-xp-current">0</span> / <span id="avatar-xp-next">200</span> XP
+                        </p>
+                    </div>
+
+                    <!-- Atributos do Corpo -->
+                    <div class="w-full grid grid-cols-2 gap-3 mb-4">
+                        <div class="p-3 rounded-2xl bg-rose-50 border border-rose-100 text-center">
+                            <span class="text-rose-500 font-bold text-[10px] block uppercase">Gordura Corporal</span>
+                            <b id="avatar-body-fat" class="text-rose-900 font-black text-lg">20%</b>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-center">
+                            <span class="text-emerald-500 font-bold text-[10px] block uppercase">Massa Muscular</span>
+                            <b id="avatar-muscle-mass" class="text-emerald-900 font-black text-lg">50%</b>
+                        </div>
+                    </div>
+
+                    <!-- Itens Equipados -->
+                    <div class="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                        <p class="text-[11px] font-black text-slate-500 uppercase mb-2">Itens Equipados:</p>
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-outfit">Regata Básica</span>
+                            <span class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-accessory">Shaker</span>
+                            <span class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-aura">Nenhuma</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loja de Itens -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>🛒</span> Loja de Itens
+                    </h3>
+                    <span class="text-xs text-amber-600 font-black">💰 <span id="avatar-shop-coins">100</span> moedas</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2" id="avatar-shop-list">
+                    <!-- Itens renderizados dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Missões do Avatar -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-3">
+                    <span>🎯</span> Missões Diárias
+                </h3>
+                <div id="avatar-missions-list" class="space-y-2">
+                    <div class="text-center py-8 text-slate-400">
+                        <span class="text-3xl block mb-2">🎯</span>
+                        <p class="text-sm font-bold">Carregando missões...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ABA: BATALHA FAMILIAR DO DIA DO LIXO -->
         <section id="tab-familia" class="tab-content hidden space-y-6">
             <!-- Banner Dinâmico da Família Real / Batalha -->
@@ -851,6 +1060,18 @@
             <button data-tab-target="restaurantes" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
                 <span class="text-lg sm:text-xl">📍</span>
                 <span class="text-[10px] sm:text-[11px]">Locais</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="treinos" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">🏋️</span>
+                <span class="text-[10px] sm:text-[11px]">Treinos</span>
+                <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
+            </button>
+
+            <button data-tab-target="avatar" class="flex flex-col items-center gap-0.5 sm:gap-1 text-slate-400 font-medium transition group">
+                <span class="text-lg sm:text-xl">👤</span>
+                <span class="text-[10px] sm:text-[11px]">Avatar</span>
                 <div class="nav-indicator w-1.5 h-1.5 bg-emerald-600 rounded-full opacity-0 transition-all"></div>
             </button>
 
@@ -1108,39 +1329,8 @@
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <div data-pace="suave" onclick="Onboarding.selectPace('suave')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
-                            <span class="text-2xl p-2 bg-emerald-50 rounded-xl">🌱</span>
-                            <div class="text-left flex-1">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="font-black text-slate-800 text-xs">Suave & Sustentável</h4>
-                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">-300 kcal/dia</span>
-                                </div>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.3 kg por semana. Muito fácil de manter sem passar fome.</p>
-                            </div>
-                        </div>
-
-                        <div data-pace="moderado" onclick="Onboarding.selectPace('moderado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/80 shadow-md transition-all scale-[1.02] cursor-pointer">
-                            <span class="text-2xl p-2 bg-teal-50 rounded-xl">🎯</span>
-                            <div class="text-left flex-1">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="font-black text-slate-800 text-xs">Moderado (Recomendado)</h4>
-                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">-500 kcal/dia</span>
-                                </div>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.5 kg por semana. O padrão ouro dos nutricionistas.</p>
-                            </div>
-                        </div>
-
-                        <div data-pace="acelerado" onclick="Onboarding.selectPace('acelerado')" class="quiz-pace-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
-                            <span class="text-2xl p-2 bg-amber-50 rounded-xl">⚡</span>
-                            <div class="text-left flex-1">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="font-black text-slate-800 text-xs">Acelerado & Focado</h4>
-                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">-750 kcal/dia</span>
-                                </div>
-                                <p class="text-[11px] text-slate-400 mt-0.5">Perda de ~0.75 kg por semana. Requer foco total e mais disciplina.</p>
-                            </div>
-                        </div>
+                    <div id="quiz-pace-cards-container" class="space-y-2">
+                        <!-- Cards renderizados dinamicamente pelo Onboarding.adjustPaceOptionsForGoal() -->
                     </div>
 
                     <button onclick="Onboarding.nextStep()" class="btn-primary-gradient w-full py-3.5 rounded-2xl text-xs font-black shadow-md transition hover:scale-105">
@@ -1148,45 +1338,70 @@
                     </button>
                 </div>
 
-                <!-- PASSO 5: NÍVEL DE ATIVIDADE FÍSICA -->
+                <!-- PASSO 5: NÍVEL DE ATIVIDADE FÍSICA & ROTINA PERSONALIZADA -->
                 <div id="wizard-step-5" class="quiz-step hidden space-y-4">
                     <div class="text-center">
                         <span class="text-3xl">🏃</span>
-                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Atividade física diária</h3>
-                        <p class="text-xs text-slate-400">Qual o seu nível de movimentação e treinos no dia a dia?</p>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-800 mt-1">Atividade física & Rotina</h3>
+                        <p class="text-xs text-slate-400">Personalize seu gasto diário e rotina de refeições.</p>
                     </div>
 
-                    <div class="space-y-2">
-                        <div data-activity="sedentario" onclick="Onboarding.selectActivity('sedentario')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
-                            <span class="text-2xl p-2 bg-slate-100 rounded-xl">🛋️</span>
-                            <div class="text-left">
-                                <h4 class="font-black text-slate-800 text-xs">Sedentário</h4>
-                                <p class="text-[11px] text-slate-400">Trabalho sentado, pouco ou nenhum exercício semanal.</p>
+                    <div>
+                        <label class="text-[11px] font-black text-slate-500 uppercase block mb-1.5">Frequência de Exercícios / Treinos:</label>
+                        <div class="space-y-2">
+                            <div data-activity="sedentario" onclick="Onboarding.selectActivity('sedentario')" class="quiz-activity-btn flex items-center gap-3.5 p-3 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                                <span class="text-xl p-2 bg-slate-100 rounded-xl">🛋️</span>
+                                <div class="text-left">
+                                    <h4 class="font-black text-slate-800 text-xs">Sedentário</h4>
+                                    <p class="text-[11px] text-slate-400">Trabalho sentado, pouco ou nenhum exercício semanal.</p>
+                                </div>
+                            </div>
+
+                            <div data-activity="leve" onclick="Onboarding.selectActivity('leve')" class="quiz-activity-btn flex items-center gap-3.5 p-3 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                                <span class="text-xl p-2 bg-slate-100 rounded-xl">🚶</span>
+                                <div class="text-left">
+                                    <h4 class="font-black text-slate-800 text-xs">Levemente Ativo</h4>
+                                    <p class="text-[11px] text-slate-400">Caminhadas ou exercícios leves 1 a 2 vezes por semana.</p>
+                                </div>
+                            </div>
+
+                            <div data-activity="moderado" onclick="Onboarding.selectActivity('moderado')" class="quiz-activity-btn flex items-center gap-3.5 p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-50/80 shadow-md transition-all scale-[1.02] cursor-pointer">
+                                <span class="text-xl p-2 bg-emerald-100 rounded-xl">🏃</span>
+                                <div class="text-left">
+                                    <h4 class="font-black text-slate-800 text-xs">Moderadamente Ativo (Recomendado)</h4>
+                                    <p class="text-[11px] text-slate-400">Treinos (musculação, corrida) 3 a 5 vezes por semana.</p>
+                                </div>
+                            </div>
+
+                            <div data-activity="intenso" onclick="Onboarding.selectActivity('intenso')" class="quiz-activity-btn flex items-center gap-3.5 p-3 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
+                                <span class="text-xl p-2 bg-slate-100 rounded-xl">⚡</span>
+                                <div class="text-left">
+                                    <h4 class="font-black text-slate-800 text-xs">Muito Ativo / Atleta</h4>
+                                    <p class="text-[11px] text-slate-400">Treinos pesados quase diários ou trabalho físico intenso.</p>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div data-activity="leve" onclick="Onboarding.selectActivity('leve')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
-                            <span class="text-2xl p-2 bg-slate-100 rounded-xl">🚶</span>
-                            <div class="text-left">
-                                <h4 class="font-black text-slate-800 text-xs">Levemente Ativo</h4>
-                                <p class="text-[11px] text-slate-400">Caminhadas ou exercícios leves 1 a 2 vezes por semana.</p>
-                            </div>
+                    <!-- Personalização Adicional: Refeições por Dia e Estilo -->
+                    <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Refeições ao dia:</label>
+                            <select id="quiz-meals-per-day" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-500">
+                                <option value="3">3 refeições (Café, Almoço, Jantar)</option>
+                                <option value="4" selected>4 refeições (+ Lanche)</option>
+                                <option value="5">5 refeições (Fracionada)</option>
+                                <option value="2">Jejum Intermitente (16/8)</option>
+                            </select>
                         </div>
-
-                        <div data-activity="moderado" onclick="Onboarding.selectActivity('moderado')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/80 shadow-md transition-all scale-[1.02] cursor-pointer">
-                            <span class="text-2xl p-2 bg-emerald-100 rounded-xl">🏃</span>
-                            <div class="text-left">
-                                <h4 class="font-black text-slate-800 text-xs">Moderadamente Ativo</h4>
-                                <p class="text-[11px] text-slate-400">Treinos (musculação, corrida) 3 a 5 vezes por semana.</p>
-                            </div>
-                        </div>
-
-                        <div data-activity="intenso" onclick="Onboarding.selectActivity('intenso')" class="quiz-activity-btn flex items-center gap-3.5 p-3.5 rounded-2xl border-2 border-slate-100 hover:border-emerald-200 bg-white shadow-sm transition-all cursor-pointer">
-                            <span class="text-2xl p-2 bg-slate-100 rounded-xl">⚡</span>
-                            <div class="text-left">
-                                <h4 class="font-black text-slate-800 text-xs">Muito Ativo / Atleta</h4>
-                                <p class="text-[11px] text-slate-400">Treinos pesados quase diários ou trabalho físico intenso.</p>
-                            </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Estilo Alimentar:</label>
+                            <select id="quiz-diet-style" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-500">
+                                <option value="padrao" selected>Padrão Brasileiro (Flexível)</option>
+                                <option value="lowcarb">Low Carb / Menos Carbo</option>
+                                <option value="vegetariano">Vegetariano</option>
+                                <option value="sem_lactose">Sem Lactose / Intolerante</option>
+                            </select>
                         </div>
                     </div>
 
@@ -1229,6 +1444,8 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div id="plan-energy-breakdown" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1"></div>
 
                         <!-- Distribuição de Macronutrientes & Água -->
                         <div class="grid grid-cols-4 gap-2 text-center text-xs">
@@ -1792,5 +2009,7 @@
     <script src="/static/js/cheat_day.js"></script>
     <script src="/static/js/restaurants.js"></script>
     <script src="/static/js/profile_charts.js"></script>
+    <script src="/static/js/workout.js"></script>
+    <script src="/static/js/avatar.js"></script>
 </body>
 </html>

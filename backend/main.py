@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import math
+import re
 import socket
 import secrets
 from datetime import datetime, timedelta
@@ -25,6 +26,8 @@ import gemini_service
 import auth
 import gamification
 import meal_planner
+import workout_service
+import avatar_service
 
 # Inicializar banco e sementes se necessário
 init_db()
@@ -219,6 +222,39 @@ class MenuLogDish(BaseModel):
     meal_type: str
     dish_name: str
 
+class WorkoutLogCreate(BaseModel):
+    user_id: Optional[int] = 1
+    date: Optional[str] = None
+    name: str
+    category: Optional[str] = "Geral"
+    duration_minutes: Optional[int] = 45
+    intensity: Optional[str] = "moderado"
+    exercises: Optional[List[dict]] = []
+    notes: Optional[str] = ""
+
+class WorkoutTemplateCreate(BaseModel):
+    user_id: Optional[int] = 1
+    name: str
+    focus_area: str
+    exercises: List[dict]
+
+class AvatarPhotoUpdate(BaseModel):
+    user_id: Optional[int] = 1
+    photo_url: str
+
+class AvatarShopBuy(BaseModel):
+    user_id: Optional[int] = 1
+    item_id: str
+
+class AvatarEquip(BaseModel):
+    user_id: Optional[int] = 1
+    item_id: str
+    category: str
+
+class MissionClaimRequest(BaseModel):
+    user_id: Optional[int] = 1
+    mission_id: int
+
 # ----------------- FUNÇÕES AUXILIARES -----------------
 
 def calculate_nutritional_targets(weight, height, age, gender, activity_level, goal, pace="moderado"):
@@ -237,16 +273,21 @@ def calculate_nutritional_targets(weight, height, age, gender, activity_level, g
     multiplier = multipliers.get(str(activity_level).lower(), 1.55)
     tdee = bmr * multiplier
 
-    # Ritmo de déficit ou superávit
+    # Ritmo de déficit ou superávit 100% calibrado cientificamente
     deficit_map = {
         "suave": 300,
         "moderado": 500,
         "acelerado": 750
     }
     surplus_map = {
-        "suave": 250,
-        "moderado": 400,
-        "acelerado": 600
+        "suave": 300,
+        "moderado": 450,
+        "acelerado": 650
+    }
+    maintenance_map = {
+        "suave": -150,     # Recomposição leve com déficit suave
+        "moderado": 0,      # Equilíbrio exato 0 kcal
+        "acelerado": 150    # Leve superávit para densidade
     }
     
     pace_clean = str(pace or "moderado").lower()
@@ -255,11 +296,11 @@ def calculate_nutritional_targets(weight, height, age, gender, activity_level, g
         cal_diff = -deficit_map.get(pace_clean, 500)
         target_calories = round(tdee + cal_diff)
     elif goal == "hipertrofia":
-        cal_diff = surplus_map.get(pace_clean, 400)
+        cal_diff = surplus_map.get(pace_clean, 450)
         target_calories = round(tdee + cal_diff)
     else: # manter
-        cal_diff = 0
-        target_calories = round(tdee)
+        cal_diff = maintenance_map.get(pace_clean, 0)
+        target_calories = round(tdee + cal_diff)
 
     # Limite mínimo seguro de calorias
     min_calories = 1200 if str(gender).upper() == "F" else 1400
@@ -284,7 +325,7 @@ def calculate_nutritional_targets(weight, height, age, gender, activity_level, g
         bmi_status = "Obesidade Grau II/III"
         bmi_color = "rose"
 
-    # Macronutrientes
+    # Macronutrientes (Proteína, Gorduras essenciais e Carboidratos)
     protein_mult = 2.0 if goal == "emagrecer" else (2.2 if goal == "hipertrofia" else 1.8)
     protein_g = round(weight * protein_mult)
     fat_g = round(weight * 0.85)
@@ -292,10 +333,13 @@ def calculate_nutritional_targets(weight, height, age, gender, activity_level, g
     rem_cal = max(200, target_calories - cal_from_pf)
     carbs_g = round(rem_cal / 4)
     water_ml = round(weight * 38)
+    activity_burn = round(tdee - bmr)
 
     return {
         "bmr": round(bmr),
         "tdee": round(tdee),
+        "activity_burn": activity_burn,
+        "bmr_explanation": "Taxa Metabólica Basal (TMB): o que seu corpo consome só em repouso 24h para respiração, circulação e funcionamento celular.",
         "cal_diff": cal_diff,
         "bmi": bmi,
         "bmi_status": bmi_status,
@@ -304,7 +348,10 @@ def calculate_nutritional_targets(weight, height, age, gender, activity_level, g
         "target_protein": protein_g,
         "target_carbs": carbs_g,
         "target_fat": fat_g,
-        "target_water": water_ml
+        "target_water": water_ml,
+        "protein_per_kg": protein_mult,
+        "fat_per_kg": 0.85,
+        "fiber_target": 30
     }
 
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -1022,6 +1069,65 @@ def log_dish_to_diary(data: MenuLogDish):
         meal_type=data.meal_type,
         dish_name=data.dish_name
     )
+
+# ----------------- ROTAS DE TREINOS (ESTILO GROWTH) -----------------
+
+@app.get("/api/workouts/today")
+def get_workouts_today(date: Optional[str] = None, user_id: Optional[int] = 1):
+    d = date or datetime.now().strftime("%Y-%m-%d")
+    return workout_service.get_workouts(user_id=user_id or 1, date_str=d)
+
+@app.post("/api/workouts/log")
+def log_user_workout(data: WorkoutLogCreate):
+    d = data.date or datetime.now().strftime("%Y-%m-%d")
+    res = workout_service.log_workout(
+        user_id=data.user_id or 1,
+        date_str=d,
+        name=data.name,
+        category=data.category or "Geral",
+        duration_minutes=data.duration_minutes or 45,
+        intensity=data.intensity or "moderado",
+        exercises=data.exercises or [],
+        notes=data.notes or ""
+    )
+    gamification.get_or_create_streak(data.user_id or 1, d)
+    gamification.award_points(data.user_id or 1, "workout_logged", 50, f"Treino realizado: {data.name}", d)
+    return res
+
+@app.get("/api/workouts/templates")
+def get_user_workout_templates(user_id: Optional[int] = 1):
+    return workout_service.get_workout_templates(user_id=user_id or 1)
+
+@app.post("/api/workouts/templates")
+def create_custom_template(data: WorkoutTemplateCreate):
+    return workout_service.create_custom_workout_template(
+        user_id=data.user_id or 1,
+        name=data.name,
+        focus_area=data.focus_area,
+        exercises=data.exercises
+    )
+
+# ----------------- ROTAS DE AVATAR EVOLUTIVO & GAMIFICAÇÃO -----------------
+
+@app.get("/api/avatar")
+def get_user_avatar(user_id: Optional[int] = 1):
+    return avatar_service.get_or_create_avatar(user_id=user_id or 1)
+
+@app.post("/api/avatar/photo")
+def update_avatar_face(data: AvatarPhotoUpdate):
+    return avatar_service.update_avatar_photo(user_id=data.user_id or 1, photo_data_url=data.photo_url)
+
+@app.post("/api/avatar/buy")
+def buy_avatar_shop_item(data: AvatarShopBuy):
+    return avatar_service.buy_shop_item(user_id=data.user_id or 1, item_id=data.item_id)
+
+@app.post("/api/avatar/equip")
+def equip_avatar_item(data: AvatarEquip):
+    return avatar_service.equip_item(user_id=data.user_id or 1, item_id=data.item_id, category=data.category)
+
+@app.post("/api/missions/claim")
+def claim_user_mission(data: MissionClaimRequest):
+    return gamification.complete_mission_manually(user_id=data.user_id or 1, mission_id=data.mission_id)
 
 # ----------------- ROTAS DE DOWNLOAD DO APK -----------------
 

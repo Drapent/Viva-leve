@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String PREFS_NAME = "VivaLevePrefs";
     private static final String PREF_SERVER_URL = "server_url";
-    private static final String DEFAULT_SERVER_URL = "http://192.168.1.116:8000";
+    private static final String DEFAULT_SERVER_URL = "https://viva-leve.onrender.com";
     private static final int FILE_CHOOSER_REQUEST_CODE = 1001;
     private static final int PERMISSION_REQUEST_CODE = 2001;
 
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
         errorContainer.addView(errorDesc);
 
         editServerUrl = new EditText(this);
-        editServerUrl.setHint("http://192.168.1.116:8000");
+        editServerUrl.setHint("https://viva-leve.onrender.com");
         editServerUrl.setText(getServerUrl());
         editServerUrl.setPadding(24, 24, 24, 24);
         editServerUrl.setBackgroundColor(0xFFFFFFFF);

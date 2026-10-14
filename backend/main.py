@@ -3,17 +3,19 @@ import sys
 import json
 import math
 import re
+import base64
 import socket
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 # Garantir que o diretório backend esteja no sys.path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -28,6 +30,8 @@ import gamification
 import meal_planner
 import workout_service
 import avatar_service
+import body_metrics_service
+import wearable_service
 
 # Inicializar banco e sementes se necessário
 init_db()
@@ -50,6 +54,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Comprime o three.js (645 KB) e o JSON do avatar: cai para ~165 KB na rede.
+# minimum_size alto para nao comprimir respostas minusculas (gera custo sem ganho).
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
@@ -250,6 +258,54 @@ class AvatarEquip(BaseModel):
     user_id: Optional[int] = 1
     item_id: str
     category: str
+
+class ScaleReading(BaseModel):
+    user_id: Optional[int] = 1
+    date: Optional[str] = None
+    weight: Optional[float] = None
+    body_fat: Optional[float] = None
+    muscle_mass: Optional[float] = None
+    water_pct: Optional[float] = None
+    bone_mass: Optional[float] = None
+    visceral_fat: Optional[float] = None
+    basal_metabolism: Optional[float] = None
+    metabolic_age: Optional[float] = None
+    source: str = "manual"
+    device_name: str = ""
+    raw: Optional[dict] = None
+
+class WearableRegister(BaseModel):
+    user_id: Optional[int] = 1
+    name: str
+    kind: str = "watch"
+    manufacturer: str = ""
+    device_id: str = ""
+
+class WearableSession(BaseModel):
+    user_id: Optional[int] = 1
+    date: Optional[str] = None
+    device_id: Optional[int] = None
+    device_name: str = ""
+    calories_burned: float = 0.0
+    active_calories: float = 0.0
+    steps: int = 0
+    distance_km: float = 0.0
+    resting_hr: Optional[int] = None
+    avg_hr: Optional[int] = None
+    max_hr: Optional[int] = None
+    active_minutes: int = 0
+    sleep_hours: float = 0.0
+    spo2: Optional[int] = None
+    source: str = "manual"
+
+class HeartbeatSample(BaseModel):
+    user_id: Optional[int] = 1
+    bpm: float
+    device_id: Optional[int] = None
+
+class AvatarAppearanceUpdate(BaseModel):
+    user_id: Optional[int] = 1
+    traits: Dict[str, Any]
 
 class MissionClaimRequest(BaseModel):
     user_id: Optional[int] = 1
@@ -1124,6 +1180,158 @@ def buy_avatar_shop_item(data: AvatarShopBuy):
 @app.post("/api/avatar/equip")
 def equip_avatar_item(data: AvatarEquip):
     return avatar_service.equip_item(user_id=data.user_id or 1, item_id=data.item_id, category=data.category)
+
+@app.get("/api/avatar/model")
+def get_avatar_3d_model(user_id: Optional[int] = 1):
+    """Pacote completo que o renderizador Three.js usa: corpo (balança) + rosto (IA)."""
+    return avatar_service.build_avatar_model(user_id=user_id or 1)
+
+@app.post("/api/avatar/photo/analyze")
+async def analyze_avatar_photo_route(
+    file: UploadFile = File(...),
+    user_id: Optional[int] = Query(1),
+):
+    """Recebe a foto, aplica no avatar e usa a IA para extrair os traits do rosto."""
+    uid = user_id or 1
+    image_bytes = await file.read()
+
+    if not image_bytes or len(image_bytes) < 80:
+        raise HTTPException(status_code=400, detail="Foto inválida ou vazia.")
+
+    mime = file.content_type or "image/jpeg"
+    if not mime.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Envie um arquivo de imagem.")
+
+    # Guarda a foto no avatar (data URL, igual ao fluxo antigo)
+    data_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+    avatar_service.update_avatar_photo(user_id=uid, photo_data_url=data_url)
+
+    traits = gemini_service.analyze_avatar_photo(image_bytes, mime, user_id=uid)
+    appearance = avatar_service.save_appearance(
+        user_id=uid,
+        traits=traits,
+        engine=traits.get("engine", ""),
+    )
+
+    return {
+        "success": True,
+        "message": traits.get("message", "✨ Avatar 3D gerado a partir da sua foto!"),
+        "engine": traits.get("engine", ""),
+        "appearance": appearance,
+        "photo_url": data_url,
+        "model": avatar_service.build_avatar_model(uid),
+    }
+
+@app.put("/api/avatar/appearance")
+def update_avatar_appearance(data: AvatarAppearanceUpdate):
+    """Ajuste manual dos traços (caso a IA erre ou o usuário queira mudar)."""
+    uid = data.user_id or 1
+    traits = gemini_service.sanitize_avatar_traits(data.traits or {})
+    appearance = avatar_service.save_appearance(uid, traits, engine="manual")
+    return {"success": True, "appearance": appearance, "model": avatar_service.build_avatar_model(uid)}
+
+@app.get("/api/avatar/evolution")
+def get_avatar_evolution(user_id: Optional[int] = 1, limit: int = 60):
+    """Linha do tempo de como o boneco mudou (gordura x músculo x peso)."""
+    uid = user_id or 1
+    body_metrics_service.record_snapshot(uid, note="Leitura automática")
+    return body_metrics_service.get_evolution(uid, limit=limit)
+
+# ----------------- ROTAS DA BALANÇA DIGITAL (BIOIMPEDÂNCIA) -----------------
+
+@app.post("/api/body/scale/sync")
+def sync_scale_reading(data: ScaleReading):
+    """Recebe a leitura vinda do Web Bluetooth (ou simulador) e remodela o avatar."""
+    uid = data.user_id or 1
+    result = body_metrics_service.save_scale_reading(
+        user_id=uid,
+        date=data.date or body_metrics_service.today_str(),
+        data=data.model_dump(),
+        source=data.source,
+        device_name=data.device_name,
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Leitura inválida."))
+
+    # Recompensa por manter a balança conectada (mantém o avatar vivo)
+    try:
+        gamification.award_points(uid, "scale_sync", 15, "Leitura da balança registrada")
+    except Exception:
+        pass
+
+    result["appearance"] = avatar_service.get_appearance(uid)
+    return result
+
+@app.get("/api/body/composition")
+def get_body_composition(user_id: Optional[int] = 1):
+    uid = user_id or 1
+    latest = body_metrics_service.get_latest_reading(uid)
+    return {
+        "latest": latest,
+        "model": body_metrics_service.build_body_model(uid),
+        "has_scale": latest is not None,
+    }
+
+@app.get("/api/body/history")
+def get_body_history(user_id: Optional[int] = 1, limit: int = 90):
+    return {"history": body_metrics_service.get_history(user_id or 1, limit=limit)}
+
+# ----------------- ROTAS DO RELÓGIO DIGITAL / SMARTWATCH -----------------
+
+@app.get("/api/wearables")
+def list_wearables(user_id: Optional[int] = 1):
+    """A checagem real de Web Bluetooth acontece no navegador (navigator.bluetooth)."""
+    uid = user_id or 1
+    return {
+        "devices": wearable_service.list_devices(uid),
+        "summary": wearable_service.get_day_summary(uid),
+        "health": wearable_service.health_score(uid),
+    }
+
+@app.post("/api/wearables/register")
+def register_wearable(data: WearableRegister):
+    return wearable_service.register_device(
+        user_id=data.user_id or 1,
+        name=data.name,
+        kind=data.kind,
+        manufacturer=data.manufacturer,
+        device_id=data.device_id,
+    )
+
+@app.delete("/api/wearables/{device_id}")
+def delete_wearable(device_id: int, user_id: Optional[int] = 1):
+    return wearable_service.remove_device(user_id or 1, device_id)
+
+@app.post("/api/wearables/session")
+def log_wearable_session(data: WearableSession):
+    """Sincroniza os sensores do relógio com a dieta."""
+    uid = data.user_id or 1
+    result = wearable_service.log_session(
+        user_id=uid,
+        data=data.model_dump(),
+        source=data.source,
+        device_id=data.device_id,
+        device_name=data.device_name,
+    )
+    result["health"] = wearable_service.health_score(uid)
+    return result
+
+@app.post("/api/wearables/heartbeat")
+def log_heartbeat(data: HeartbeatSample):
+    """Batida isolada do sensor de FC (live)."""
+    uid = data.user_id or 1
+    wearable_service.touch_device(uid, data.device_id)
+    conn_info = wearable_service.get_day_summary(uid)
+    return {"success": True, "bpm": data.bpm, "summary": conn_info}
+
+@app.get("/api/wearables/summary")
+def get_wearable_summary(user_id: Optional[int] = 1, date: Optional[str] = None):
+    uid = user_id or 1
+    return {
+        "summary": wearable_service.get_day_summary(uid, date),
+        "health": wearable_service.health_score(uid),
+        "history": wearable_service.get_history(uid, days=30),
+    }
 
 @app.post("/api/missions/claim")
 def claim_user_mission(data: MissionClaimRequest):

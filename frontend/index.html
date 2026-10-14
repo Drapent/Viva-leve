@@ -37,9 +37,10 @@
         }
     </script>
 
-    <!-- Chart.js & QRCode.js (Locais 100% Offline) -->
+    <!-- Chart.js & QRCode.js + three.js (Locais 100% Offline) -->
     <script src="/static/vendor/chart.min.js"></script>
     <script src="/static/vendor/qrcode.min.js"></script>
+    <script src="/static/vendor/three.min.js"></script>
 
     <!-- Custom Styles -->
     <link rel="stylesheet" href="/static/css/style.css">
@@ -867,68 +868,320 @@
             <!-- Banner do Avatar -->
             <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-orange-500/20">
                 <div class="flex items-center gap-2 mb-1">
-                    <span class="text-2xl">👤</span>
-                    <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">Avatar Evolutivo</span>
+                    <span class="text-2xl">🧊</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">Avatar 3D Evolutivo</span>
                 </div>
-                <h2 class="text-lg sm:text-xl font-black tracking-tight leading-tight">Seu Avatar</h2>
+                <h2 class="text-lg sm:text-xl font-black tracking-tight leading-tight">Seu Boneco 3D</h2>
                 <p class="text-xs text-amber-100 mt-1">
-                    Complete missões e treinos para evoluir seu avatar! Ele muda conforme seu progresso real.
+                    Tire uma foto, conecte a balança e o relógio. Seu boneco engorde, emagrece e ganha músculo conforme a sua dieta.
                 </p>
             </div>
 
-            <!-- Card do Avatar -->
-            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
-                <div class="flex flex-col items-center">
-                    <!-- Foto do Avatar -->
-                    <div class="relative mb-4">
-                        <div id="avatar-photo-container" class="w-32 h-32 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-5xl overflow-hidden border-4 border-white shadow-lg">
-                            <span id="avatar-photo-placeholder">👤</span>
-                            <img id="avatar-photo-img" src="" alt="Avatar" class="hidden w-full h-full object-cover">
-                        </div>
-                        <button onclick="Avatar.uploadPhoto()" class="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-lg flex items-center justify-center text-lg hover:scale-110 transition">
-                            📷
-                        </button>
+            <!-- Palco 3D -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-3 sm:p-4 shadow-sm">
+                <div class="relative rounded-2xl overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-slate-200 h-[420px] sm:h-[520px]">
+                    <canvas id="avatar-canvas" class="w-full h-full block touch-none"></canvas>
+
+                    <!-- Fallback se o aparelho não tiver WebGL -->
+                    <div id="avatar-3d-fallback" data-3d-fallback class="hidden absolute inset-0 flex-col items-center justify-center text-center p-6 gap-2">
+                        <span class="text-5xl">🧊</span>
+                        <p class="text-sm font-black text-slate-700">Este aparelho não suporta WebGL 3D</p>
+                        <p class="text-xs text-slate-500">Use um navegador com aceleração de hardware (Chrome/Android) para ver o avatar.</p>
                     </div>
 
-                    <!-- Nível e XP -->
-                    <div class="text-center mb-4">
-                        <div class="flex items-center justify-center gap-2 mb-1">
-                            <span class="px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black">
+                    <!-- Nível / XP sobre o palco -->
+                    <div class="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black shadow">
                                 Nível <span id="avatar-level">1</span>
                             </span>
-                            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black">
-                                💰 <span id="avatar-coins">100</span> moedas
+                            <span class="px-2.5 py-1 rounded-full bg-white/90 text-slate-700 text-[10px] font-black shadow">
+                                💰 <span id="avatar-coins">100</span>
                             </span>
                         </div>
-                        <div class="w-48 h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div id="avatar-xp-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all" style="width: 0%"></div>
-                        </div>
-                        <p class="text-[10px] text-slate-400 font-bold mt-1">
-                            <span id="avatar-xp-current">0</span> / <span id="avatar-xp-next">200</span> XP
-                        </p>
-                    </div>
-
-                    <!-- Atributos do Corpo -->
-                    <div class="w-full grid grid-cols-2 gap-3 mb-4">
-                        <div class="p-3 rounded-2xl bg-rose-50 border border-rose-100 text-center">
-                            <span class="text-rose-500 font-bold text-[10px] block uppercase">Gordura Corporal</span>
-                            <b id="avatar-body-fat" class="text-rose-900 font-black text-lg">20%</b>
-                        </div>
-                        <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-center">
-                            <span class="text-emerald-500 font-bold text-[10px] block uppercase">Massa Muscular</span>
-                            <b id="avatar-muscle-mass" class="text-emerald-900 font-black text-lg">50%</b>
+                        <div class="w-28">
+                            <div class="h-1.5 bg-white/70 rounded-full overflow-hidden shadow">
+                                <div id="avatar-xp-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                            <p class="text-[9px] text-slate-500 font-black text-right mt-0.5">
+                                <span id="avatar-xp-current">0</span>/<span id="avatar-xp-next">200</span> XP
+                            </p>
                         </div>
                     </div>
 
-                    <!-- Itens Equipados -->
-                    <div class="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200">
-                        <p class="text-[11px] font-black text-slate-500 uppercase mb-2">Itens Equipados:</p>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-outfit">Regata Básica</span>
-                            <span class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-accessory">Shaker</span>
-                            <span class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-aura">Nenhuma</span>
+                    <!-- Controles 3D -->
+                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 backdrop-blur rounded-2xl p-1.5 shadow-lg">
+                        <button onclick="Avatar3D.rotateBy(-0.5)" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition" title="Girar à esquerda">↺</button>
+                        <button onclick="Avatar3D.resetView()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition" title="Recentrar">🎯</button>
+                        <button onclick="Avatar3D.zoom(-0.35)" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition" title="Aproximar">＋</button>
+                        <button onclick="Avatar3D.zoom(0.35)" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition" title="Afastar">－</button>
+                        <button onclick="Avatar3D.rotateBy(0.5)" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black transition" title="Girar à direita">↻</button>
+                        <button onclick="Avatar.avatarScreenshot()" class="w-9 h-9 rounded-xl bg-violet-500 hover:bg-violet-600 text-white font-black transition" title="Salvar PNG">📸</button>
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-slate-400 text-center mt-2">Arraste o boneco para girar · role para aproximar</p>
+
+                <!-- Foto / IA -->
+                <div class="flex items-center gap-2 mt-3">
+                    <button onclick="Avatar.uploadPhoto()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black shadow-sm hover:scale-[1.02] transition">
+                        📷 Gerar avatar 3D com minha foto
+                    </button>
+                    <button onclick="Avatar.regenerate()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-black text-slate-700 transition" title="Refazer o avatar com a foto atual">🔄</button>
+                </div>
+
+                <div id="avatar-ai-status" class="hidden mt-3 px-3 py-2 rounded-xl bg-violet-50 border border-violet-200 text-[11px] font-bold text-violet-800"></div>
+                <div id="avatar-appearance" class="mt-2"></div>
+            </div>
+
+            <!-- Composição Corporal (o que molda o boneco) -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>🧪</span> Composição Corporal
+                    </h3>
+                    <span id="body-source-badge" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-700">🧮 Estimado</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div class="rounded-xl bg-rose-50 py-2 text-center">
+                        <span class="text-[9px] font-black text-rose-400 uppercase block">Gordura</span>
+                        <b id="avatar-body-fat" class="text-rose-900 font-black text-base">20%</b>
+                    </div>
+                    <div class="rounded-xl bg-emerald-50 py-2 text-center">
+                        <span class="text-[9px] font-black text-emerald-400 uppercase block">Músculo</span>
+                        <b id="avatar-muscle-mass" class="text-emerald-900 font-black text-base">50%</b>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 py-2 text-center">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block">Peso</span>
+                        <b id="body-weight" class="text-slate-800 font-black text-base">—</b>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 py-2 text-center">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block">Massa magra</span>
+                        <b id="body-lean" class="text-slate-800 font-black text-base">—</b>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] font-black text-slate-400 w-14">Gordura</span>
+                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div id="body-fat-bar" class="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full transition-all" style="width:0%"></div>
                         </div>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] font-black text-slate-400 w-14">Músculo</span>
+                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div id="body-muscle-bar" class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all" style="width:0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                    <div class="rounded-xl bg-slate-50 py-2">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block">IMC</span>
+                        <b id="body-bmi" class="text-xs font-black text-slate-700">—</b>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 py-2">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block">FFMI</span>
+                        <b id="body-ffmi" class="text-xs font-black text-slate-700">—</b>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 py-2">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block">Massa gorda</span>
+                        <b id="body-fatmass" class="text-xs font-black text-slate-700">—</b>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 py-2">
+                        <span class="text-[9px] font-black text-slate-400 uppercase block">Classificação</span>
+                        <b id="body-class" class="text-[10px] font-black text-slate-700">—</b>
+                    </div>
+                </div>
+
+                <div id="body-extra-metrics" class="flex flex-wrap gap-1.5 mt-3"></div>
+                <p class="text-[9px] text-slate-400 text-center mt-2">Fonte: <span id="body-source">—</span></p>
+            </div>
+
+            <!-- Balança Digital -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2 gap-2">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>⚖️</span> Balança Digital
+                    </h3>
+                    <span id="scale-connected-badge" class="px-2 py-1 rounded-lg text-[10px] font-black bg-slate-100 text-slate-500">Nenhuma balança</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-2">Conecte via Bluetooth: a leitura remodela o boneco na hora.</p>
+                <p id="scale-ble-support" class="text-[10px] mb-2"></p>
+                <p id="scale-status" class="text-[10px] text-slate-400 font-bold mb-3"></p>
+
+                <div class="flex gap-2 mb-3">
+                    <button id="scale-connect-btn" onclick="BodyScale.toggleConnection()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xs font-black shadow-sm hover:scale-[1.02] transition">
+                        📶 <span id="scale-connect-label">Conectar balança</span>
+                    </button>
+                    <button onclick="BodyScale.simulate()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-black text-slate-700 transition" title="Simular uma leitura para testar">🎲</button>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div class="rounded-xl bg-slate-50 py-2 text-center"><span class="text-[9px] font-black text-slate-400 uppercase block">Peso</span><b id="scale-v-weight" class="text-xs font-black text-slate-700">—</b></div>
+                    <div class="rounded-xl bg-rose-50 py-2 text-center"><span class="text-[9px] font-black text-rose-400 uppercase block">Gordura</span><b id="scale-v-fat" class="text-xs font-black text-rose-700">—</b></div>
+                    <div class="rounded-xl bg-emerald-50 py-2 text-center"><span class="text-[9px] font-black text-emerald-400 uppercase block">Músculo</span><b id="scale-v-muscle" class="text-xs font-black text-emerald-700">—</b></div>
+                    <div class="rounded-xl bg-sky-50 py-2 text-center"><span class="text-[9px] font-black text-sky-400 uppercase block">Água</span><b id="scale-v-water" class="text-xs font-black text-sky-700">—</b></div>
+                    <div class="rounded-xl bg-stone-50 py-2 text-center"><span class="text-[9px] font-black text-stone-400 uppercase block">Ósseo</span><b id="scale-v-bone" class="text-xs font-black text-stone-700">—</b></div>
+                    <div class="rounded-xl bg-orange-50 py-2 text-center"><span class="text-[9px] font-black text-orange-400 uppercase block">Visceral</span><b id="scale-v-visceral" class="text-xs font-black text-orange-700">—</b></div>
+                    <div class="rounded-xl bg-violet-50 py-2 text-center"><span class="text-[9px] font-black text-violet-400 uppercase block">Basal</span><b id="scale-v-bmr" class="text-xs font-black text-violet-700">—</b></div>
+                    <div class="rounded-xl bg-slate-50 py-2 text-center"><span class="text-[9px] font-black text-slate-400 uppercase block">Última</span><b id="scale-v-date" class="text-[10px] font-black text-slate-700">—</b></div>
+                </div>
+
+                <details class="mb-3">
+                    <summary class="text-[11px] font-black text-slate-600 cursor-pointer select-none">✍️ Digitar leitura na mão</summary>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                        <input id="scale-weight" type="number" step="0.1" placeholder="Peso (kg)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-fat" type="number" step="0.1" placeholder="Gordura (%)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-muscle" type="number" step="0.1" placeholder="Músculo (%)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-water" type="number" step="0.1" placeholder="Água (%)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-bone" type="number" step="0.01" placeholder="Ósseo (kg)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-visceral" type="number" step="0.1" placeholder="Visceral" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-bmr" type="number" step="1" placeholder="Basal (kcal)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="scale-device-name" type="text" value="Manual" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                    </div>
+                    <button onclick="BodyScale.submitManual()" class="w-full mt-2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-black transition">
+                        Enviar leitura
+                    </button>
+                </details>
+
+                <details>
+                    <summary class="text-[11px] font-black text-slate-600 cursor-pointer select-none">📜 Histórico de leituras</summary>
+                    <div id="scale-history" class="mt-2 space-y-1"></div>
+                </details>
+            </div>
+
+            <!-- Relógio Digital -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2 gap-2">
+                    <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                        <span>⌚</span> Relógio Digital
+                    </h3>
+                    <span id="wear-connected-badge" class="px-2 py-1 rounded-lg text-[10px] font-black bg-slate-100 text-slate-500">Nenhum relógio</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-2">Conecte a pulseira para medir batimentos, passos e calorias gastas.</p>
+                <p id="wear-ble-support" class="text-[10px] mb-2"></p>
+                <p id="wear-status" class="text-[10px] text-slate-400 font-bold mb-3"></p>
+
+                <div class="flex gap-2 mb-3">
+                    <button id="wear-connect-btn" onclick="Wearable.toggleConnection()" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs font-black shadow-sm hover:scale-[1.02] transition">
+                        ⌚ <span id="wear-connect-label">Conectar relógio</span>
+                    </button>
+                    <button onclick="Wearable.importFromWorkouts()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-black text-slate-700 transition" title="Importar dos treinos já registrados">📥</button>
+                </div>
+
+                <!-- FC ao vivo -->
+                <div class="flex items-center gap-4 p-3 rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-100 mb-3">
+                    <div id="wear-live-ring" class="w-20 h-20 rounded-full shrink-0" style="background: conic-gradient(#f43f5e 0%, #e2e8f0 0%)"></div>
+                    <div class="min-w-0">
+                        <p class="text-[9px] font-black text-rose-400 uppercase">Batimento ao vivo</p>
+                        <b id="wear-live-bpm" class="text-3xl font-black text-rose-700 leading-none">—</b>
+                        <span class="text-[10px] font-black text-rose-400"> bpm</span>
+                        <div class="grid grid-cols-3 gap-1.5 mt-1.5 text-center">
+                            <div><span class="text-[8px] font-black text-slate-400 block">MÍN</span><b id="wear-live-min" class="text-[10px] font-black text-slate-600">—</b></div>
+                            <div><span class="text-[8px] font-black text-slate-400 block">MÉD</span><b id="wear-live-avg" class="text-[10px] font-black text-slate-600">—</b></div>
+                            <div><span class="text-[8px] font-black text-slate-400 block">MÁX</span><b id="wear-live-max" class="text-[10px] font-black text-slate-600">—</b></div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="Wearable.commitSession()" class="w-full mb-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-700 text-[11px] font-black transition">
+                    💾 Gravar sessão de hoje no diário
+                </button>
+
+                <!-- Métricas do dia -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div class="rounded-xl bg-orange-50 py-2 text-center"><span class="text-[9px] font-black text-orange-400 uppercase block">Gastas</span><b id="wear-v-burned" class="text-xs font-black text-orange-700">0</b></div>
+                    <div class="rounded-xl bg-sky-50 py-2 text-center"><span class="text-[9px] font-black text-sky-400 uppercase block">Passos</span><b id="wear-v-steps" class="text-xs font-black text-sky-700">0</b></div>
+                    <div class="rounded-xl bg-violet-50 py-2 text-center"><span class="text-[9px] font-black text-violet-400 uppercase block">Distância</span><b id="wear-v-distance" class="text-xs font-black text-violet-700">0</b></div>
+                    <div class="rounded-xl bg-emerald-50 py-2 text-center"><span class="text-[9px] font-black text-emerald-400 uppercase block">Ativos</span><b id="wear-v-active" class="text-xs font-black text-emerald-700">0</b></div>
+                    <div class="rounded-xl bg-indigo-50 py-2 text-center"><span class="text-[9px] font-black text-indigo-400 uppercase block">Sono</span><b id="wear-v-sleep" class="text-xs font-black text-indigo-700">0</b></div>
+                    <div class="rounded-xl bg-rose-50 py-2 text-center"><span class="text-[9px] font-black text-rose-400 uppercase block">FC repouso</span><b id="wear-v-hr-rest" class="text-xs font-black text-rose-700">—</b></div>
+                    <div class="rounded-xl bg-rose-50 py-2 text-center"><span class="text-[9px] font-black text-rose-400 uppercase block">FC máx</span><b id="wear-v-hr-max" class="text-xs font-black text-rose-700">—</b></div>
+                    <div class="rounded-xl bg-teal-50 py-2 text-center"><span class="text-[9px] font-black text-teal-400 uppercase block">SpO₂</span><b id="wear-v-spo2" class="text-xs font-black text-teal-700">—</b></div>
+                </div>
+
+                <!-- Saldo calórico -->
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 mb-3">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[10px] font-black text-slate-500 uppercase">Saldo do dia</span>
+                        <span id="wear-balance-badge" class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700">—</span>
+                    </div>
+                    <p class="text-[11px] text-slate-600 font-bold">
+                        Comeu <b id="wear-v-consumed" class="text-slate-800">0</b> kcal ·
+                        meta <b id="wear-v-target" class="text-slate-800">0</b> kcal ·
+                        saldo <b id="wear-v-balance" class="text-emerald-700">0</b> kcal
+                    </p>
+                </div>
+
+                <!-- Progresso diário -->
+                <div class="space-y-2 mb-3">
+                    <div>
+                        <div class="flex justify-between text-[9px] font-black text-slate-400 mb-0.5"><span>🚶 PASSOS</span><span id="wear-pct-steps">0%</span></div>
+                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="wear-bar-steps" class="h-full bg-sky-500 rounded-full transition-all" style="width:0%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[9px] font-black text-slate-400 mb-0.5"><span>🔥 MINUTOS ATIVOS</span><span id="wear-pct-active">0%</span></div>
+                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="wear-bar-active" class="h-full bg-emerald-500 rounded-full transition-all" style="width:0%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[9px] font-black text-slate-400 mb-0.5"><span>😴 SONO</span><span id="wear-pct-sleep">0%</span></div>
+                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="wear-bar-sleep" class="h-full bg-indigo-500 rounded-full transition-all" style="width:0%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[9px] font-black text-slate-400 mb-0.5"><span>⚡ CALORIAS GASTAS</span><span id="wear-pct-burned">0%</span></div>
+                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="wear-bar-burned" class="h-full bg-orange-500 rounded-full transition-all" style="width:0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-100 mb-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-emerald-600 uppercase">Saúde cardiovascular</span>
+                        <b id="wear-health-score" class="text-xs font-black text-emerald-700">—</b>
+                    </div>
+                    <ul id="wear-health-notes" class="mt-1 space-y-0.5"></ul>
+                </div>
+
+                <details>
+                    <summary class="text-[11px] font-black text-slate-600 cursor-pointer select-none">✍️ Digitar dados do relógio</summary>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+                        <input id="wear-calories" type="number" step="1" placeholder="Calorias gastas" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-steps" type="number" step="1" placeholder="Passos" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-distance" type="number" step="0.01" placeholder="Distância (km)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-active-min" type="number" step="1" placeholder="Minutos ativos" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-hr-rest" type="number" step="1" placeholder="FC repouso" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-hr-avg" type="number" step="1" placeholder="FC média" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-hr-max" type="number" step="1" placeholder="FC máxima" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-sleep" type="number" step="0.1" placeholder="Sono (h)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-spo2" type="number" step="1" placeholder="SpO₂ (%)" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold">
+                        <input id="wear-device-name" type="text" value="Relógio" class="px-2 py-2 rounded-xl border border-slate-200 text-xs font-bold col-span-2 sm:col-span-1">
+                    </div>
+                    <button onclick="Wearable.submitManual()" class="w-full mt-2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-black transition">
+                        Enviar dados
+                    </button>
+                </details>
+            </div>
+
+            <!-- Evolução do Boneco -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-3">
+                    <span>📈</span> Evolução do Boneco
+                </h3>
+                <div id="avatar-evolution">
+                    <p class="text-[11px] text-slate-400 text-center py-3">Carregando histórico...</p>
+                </div>
+            </div>
+
+            <!-- Itens Equipados -->
+            <div class="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2 mb-2">
+                    <span>🎽</span> Itens Equipados
+                </h3>
+                <div class="flex flex-wrap gap-2 text-sm">
+                    <span class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-outfit">Regata Básica</span>
+                    <span class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-accessory">Shaker</span>
+                    <span class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold" id="avatar-equipped-aura">Nenhuma</span>
                 </div>
             </div>
 
@@ -2010,6 +2263,9 @@
     <script src="/static/js/restaurants.js"></script>
     <script src="/static/js/profile_charts.js"></script>
     <script src="/static/js/workout.js"></script>
+    <script src="/static/js/avatar3d.js"></script>
+    <script src="/static/js/body_scale.js"></script>
+    <script src="/static/js/wearable.js"></script>
     <script src="/static/js/avatar.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-// Service Worker VivaLeve v5.0 - Ultra-Rapido (0ms Instant Load) & 100% Offline-First
-const CACHE_NAME = 'vivaleve-cache-v5.0';
+// Service Worker VivaLeve v5.1 - Ultra-Rapido (0ms Instant Load) & 100% Offline-First
+const CACHE_NAME = 'vivaleve-cache-v5.1';
 
 const STATIC_ASSETS = [
     '/',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
     '/static/vendor/tailwind.js',
     '/static/vendor/chart.min.js',
     '/static/vendor/qrcode.min.js',
+    '/static/vendor/three.min.js',
     '/static/js/onboarding.js',
     '/static/js/auth.js',
     '/static/js/streak.js',
@@ -18,6 +19,11 @@ const STATIC_ASSETS = [
     '/static/js/cheat_day.js',
     '/static/js/restaurants.js',
     '/static/js/profile_charts.js',
+    '/static/js/workout.js',
+    '/static/js/avatar3d.js',
+    '/static/js/body_scale.js',
+    '/static/js/wearable.js',
+    '/static/js/avatar.js',
     '/static/manifest.json',
     '/static/icon.svg'
 ];

@@ -297,11 +297,123 @@ def init_db():
     );
     """)
 
+    # ----------------- AVATAR 3D: analise facial por IA -----------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS avatar_appearance (
+        user_id INTEGER PRIMARY KEY,
+        skin_tone TEXT DEFAULT '#e0ac69',
+        hair_color TEXT DEFAULT '#2b1d16',
+        hair_style TEXT DEFAULT 'curto',
+        facial_hair TEXT DEFAULT 'nenhum',
+        eye_color TEXT DEFAULT '#3b2412',
+        face_shape TEXT DEFAULT 'quadrado',
+        shoulder_width TEXT DEFAULT 'medio',
+        frame TEXT DEFAULT 'medio',
+        brow_thickness REAL DEFAULT 1.0,
+        face_roundness REAL DEFAULT 1.0,
+        jaw_width REAL DEFAULT 1.0,
+        ai_confidence REAL DEFAULT 0.0,
+        ai_engine TEXT DEFAULT '',
+        analyzed_at TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS avatar_snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        weight REAL DEFAULT 0.0,
+        body_fat REAL DEFAULT 0.0,
+        muscle_mass REAL DEFAULT 0.0,
+        lean_mass REAL DEFAULT 0.0,
+        avatar_bulk REAL DEFAULT 0.0,
+        level INTEGER DEFAULT 1,
+        note TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cursor.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_avatar_snapshots_day
+        ON avatar_snapshots(user_id, date);
+    """)
+
+    # ----------------- BALANCA DIGITAL (BIOIMPEDANCIA BLE) -----------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS body_composition (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        weight REAL DEFAULT 0.0,
+        body_fat REAL,
+        muscle_mass REAL,
+        water_pct REAL,
+        bone_mass REAL,
+        visceral_fat REAL,
+        basal_metabolism REAL,
+        metabolic_age REAL,
+        bmi REAL,
+        source TEXT DEFAULT 'manual',
+        device_name TEXT DEFAULT '',
+        raw_payload TEXT DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cursor.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_body_composition_day
+        ON body_composition(user_id, date);
+    """)
+
+    # ----------------- RELOGIO / SMARTWATCH (BLE HRM-GPS) -----------------
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS wearable_devices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        kind TEXT DEFAULT 'watch',
+        manufacturer TEXT DEFAULT '',
+        device_id TEXT DEFAULT '',
+        last_connected_at TIMESTAMP,
+        last_sync_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS wearable_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        device_id INTEGER,
+        device_name TEXT DEFAULT '',
+        calories_burned REAL DEFAULT 0.0,
+        active_calories REAL DEFAULT 0.0,
+        steps INTEGER DEFAULT 0,
+        distance_km REAL DEFAULT 0.0,
+        resting_hr INTEGER,
+        avg_hr INTEGER,
+        max_hr INTEGER,
+        active_minutes INTEGER DEFAULT 0,
+        sleep_hours REAL DEFAULT 0.0,
+        spo2 INTEGER,
+        source TEXT DEFAULT 'manual',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cursor.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_wearable_sessions_day
+        ON wearable_sessions(user_id, date);
+    """)
+
     # Limpeza de usuários fictícios antigos das sementes de teste
     cursor.execute("DELETE FROM users WHERE email LIKE '%@familia.com'")
     cursor.execute("DELETE FROM user_points WHERE user_id NOT IN (SELECT id FROM users)")
     cursor.execute("DELETE FROM user_streaks WHERE user_id NOT IN (SELECT id FROM users)")
     cursor.execute("DELETE FROM user_profile WHERE user_id NOT IN (SELECT id FROM users)")
+    cursor.execute("DELETE FROM avatar_snapshots WHERE user_id NOT IN (SELECT id FROM users)")
+    cursor.execute("DELETE FROM body_composition WHERE user_id NOT IN (SELECT id FROM users)")
+    cursor.execute("DELETE FROM wearable_sessions WHERE user_id NOT IN (SELECT id FROM users)")
+    cursor.execute("DELETE FROM wearable_devices WHERE user_id NOT IN (SELECT id FROM users)")
+    cursor.execute("DELETE FROM avatar_appearance WHERE user_id NOT IN (SELECT id FROM users)")
 
 
     # Migrações seguras: garantir que a coluna user_id exista em todas as tabelas

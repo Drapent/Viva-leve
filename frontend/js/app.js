@@ -235,7 +235,14 @@ const App = {
         } else if (tabId === 'treinos') {
             if (typeof Workout !== 'undefined') Workout.loadWorkouts();
         } else if (tabId === 'avatar') {
-            if (typeof Avatar !== 'undefined') Avatar.load();
+            // O canvas 3D só tem tamanho depois que a aba fica visível,
+            // então o renderizador sobe aqui (e nao no load inicial).
+            if (typeof Avatar !== 'undefined') {
+                Avatar.init3D();
+                Avatar.load();
+            }
+            if (typeof BodyScale !== 'undefined') BodyScale.load();
+            if (typeof Wearable !== 'undefined') Wearable.load();
         } else if (tabId === 'progresso') {
             ProfileCharts.load();
         }

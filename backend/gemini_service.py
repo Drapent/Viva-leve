@@ -442,6 +442,214 @@ def chat_nutrition(message: str, user_context: dict = None, user_id: Optional[in
         "engine": "VivaLeve Nutri Local Turbo"
     }
 
+# ----------------- 4. ANALISADOR DE FOTO PARA O AVATAR 3D -----------------
+PROMPT_FOTO_AVATAR = """
+Você é um artista digital 3D especialista em avatares e um analista de_traits faciais.
+Analise a FOTO desta pessoa e extraia os parâmetros que serão usados para construir um avatar 3D estilizado fiel a ela.
+
+Regras:
+- Não identifique a pessoa. Apenas descreva atributos visuais genéricos.
+- skin_tone: SEMPRE em hexadecimal, a cor média da pele do rosto, bem representativa. Escolha entre tons como #f6d7bd, #eac39f, #dfae86, #d19a6e, #bd8053, #9c6440, #7a4c30, #5a3524, #3f2418, #f2c9a0, #c98a5f.
+- hair_color: hexadecimal do cabelo.
+- Os campos *_shape e *_style devem usar EXATAMENTE um destes valores:
+  face_shape: oval | redondo | quadrado | triangular | coracao | losango
+  hair_style: curto | medio | longo | cacheado | careca | moicano | trancado | anco
+  facial_hair: nenhum | por_make | cavanhaque | barba_cheia | bigode
+- Os multiplicadores brow_thickness, face_roundness e jaw_width são números entre 0.7 e 1.4 (1.0 = neutro).
+- shoulder_width e frame descrevem o VISUAL do corpo visível: estreito | medio | largo.
+- confidence: de 0.0 a 1.0, quao confiante voce esta na sua leitura.
+
+Responda ESTRITAMENTE em JSON, sem texto extra:
+{
+    "skin_tone": "#hex",
+    "hair_color": "#hex",
+    "eye_color": "#hex",
+    "face_shape": "...",
+    "hair_style": "...",
+    "facial_hair": "...",
+    "shoulder_width": "...",
+    "frame": "...",
+    "brow_thickness": 1.0,
+    "face_roundness": 1.0,
+    "jaw_width": 1.0,
+    "confidence": 0.0
+}
+"""
+
+# Fallback honesto quando nao ha IA: o avatar ainda funciona, so fica neutro.
+AVATAR_DEFAULT_TRAITS = {
+    "skin_tone": "#dfae86",
+    "hair_color": "#2b1d16",
+    "eye_color": "#3b2412",
+    "face_shape": "quadrado",
+    "hair_style": "curto",
+    "facial_hair": "nenhum",
+    "shoulder_width": "medio",
+    "frame": "medio",
+    "brow_thickness": 1.0,
+    "face_roundness": 1.0,
+    "jaw_width": 1.0,
+    "confidence": 0.0,
+}
+
+_HAIR_STYLES = {"curto", "medio", "longo", "cacheado", "careca", "moicano", "trancado", "anco"}
+_FACE_SHAPES = {"oval", "redondo", "quadrado", "triangular", "coracao", "losango"}
+_FACIAL_HAIR = {"nenhum", "por_make", "cavanhaque", "barba_cheia", "bigode"}
+_WIDTHS = {"estreito", "medio", "largo"}
+
+
+def _normalize_hex(value, fallback: str) -> str:
+    """Aceita '#abc', 'abc' ou '#aabbcc' e devolve sempre '#rrggbb'."""
+    if not isinstance(value, str):
+        return fallback
+    v = value.strip().lstrip("#")
+    if len(v) == 3:
+        v = "".join(c * 2 for c in v)
+    if len(v) != 6:
+        return fallback
+    try:
+        int(v, 16)
+    except ValueError:
+        return fallback
+    return "#" + v.lower()
+
+
+def _pick(value, allowed: set, fallback: str) -> str:
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in allowed:
+            return v
+    return fallback
+
+
+def _ratio(value, fallback: float = 1.0) -> float:
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    if v != v:
+        return fallback
+    return max(0.7, min(1.4, v))
+
+
+def sanitize_avatar_traits(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """Garante que tudo que a IA devolveu cabe no vocabulario do avatar 3D."""
+    base = dict(AVATAR_DEFAULT_TRAITS)
+    if not isinstance(raw, dict):
+        return base
+    try:
+        conf = float(raw.get("confidence", 0.0))
+    except (TypeError, ValueError):
+        conf = 0.0
+    return {
+        "skin_tone": _normalize_hex(raw.get("skin_tone"), base["skin_tone"]),
+        "hair_color": _normalize_hex(raw.get("hair_color"), base["hair_color"]),
+        "eye_color": _normalize_hex(raw.get("eye_color"), base["eye_color"]),
+        "face_shape": _pick(raw.get("face_shape"), _FACE_SHAPES, base["face_shape"]),
+        "hair_style": _pick(raw.get("hair_style"), _HAIR_STYLES, base["hair_style"]),
+        "facial_hair": _pick(raw.get("facial_hair"), _FACIAL_HAIR, base["facial_hair"]),
+        "shoulder_width": _pick(raw.get("shoulder_width"), _WIDTHS, base["shoulder_width"]),
+        "frame": _pick(raw.get("frame"), _WIDTHS, base["frame"]),
+        "brow_thickness": _ratio(raw.get("brow_thickness"), base["brow_thickness"]),
+        "face_roundness": _ratio(raw.get("face_roundness"), base["face_roundness"]),
+        "jaw_width": _ratio(raw.get("jaw_width"), base["jaw_width"]),
+        "confidence": max(0.0, min(1.0, conf)),
+    }
+
+
+def _call_groq_avatar(api_key: str, image_bytes: bytes, mime_type: str = "image/jpeg") -> Dict[str, Any]:
+    """Visao Groq extrai os traits do avatar a partir da foto."""
+    if not api_key.startswith("gsk_"):
+        raise RuntimeError("Chave Groq ausente.")
+
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    data_url = f"data:{mime_type};base64,{image_b64}"
+    payload = {
+        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": PROMPT_FOTO_AVATAR},
+                {"type": "image_url", "image_url": {"url": data_url}},
+            ],
+        }],
+        "max_tokens": 400,
+        "temperature": 0.2,
+    }
+    resp = requests.post(
+        GROQ_API_URL,
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json=payload,
+        timeout=12.0,
+    )
+    if resp.status_code == 200:
+        traits = sanitize_avatar_traits(limpar_json_resposta(resp.json()["choices"][0]["message"]["content"]))
+        traits["success"] = True
+        traits["engine"] = "Groq Vision (Avatar 3D ⚡)"
+        return traits
+    raise RuntimeError(f"Erro Groq Vision avatar ({resp.status_code})")
+
+
+def _call_gemini_avatar(api_key: str, image_bytes: bytes, mime_type: str) -> Dict[str, Any]:
+    """Visao Google Gemini extrai os traits do avatar a partir da foto."""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+    part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+    last_error = None
+    for model_name in ("gemini-2.0-flash", "gemini-1.5-flash"):
+        try:
+            response = client.models.generate_content(model=model_name, contents=[PROMPT_FOTO_AVATAR, part])
+            if response and response.text:
+                traits = sanitize_avatar_traits(limpar_json_resposta(response.text))
+                traits["success"] = True
+                traits["engine"] = f"Google Gemini Cloud ({model_name})"
+                return traits
+        except Exception as exc:
+            last_error = exc
+            continue
+    raise RuntimeError(f"Nenhum modelo do Gemini respondeu: {last_error}")
+
+
+def analyze_avatar_photo(image_bytes: bytes, mime_type: str = "image/jpeg",
+                         user_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Analisa a foto do usuario e devolve os parametros que o Avatar3D usa
+    para montar o rosto (cor de pele, cabelo, barba, formato) e o corpo.
+    Nunca falha: se a IA nao responder, devolve os valores neutros.
+    """
+    key = get_effective_api_key(user_id)
+
+    if not key or not image_bytes or len(image_bytes) < 80:
+        return {**AVATAR_DEFAULT_TRAITS, "success": True, "engine": "VivaLeve Local",
+                "message": "Avatar gerado no modo local (sem IA). A foto ja foi aplicada."}
+
+    def _tries():
+        if key.startswith("gsk_"):
+            try:
+                yield _call_groq_avatar(key, image_bytes, mime_type)
+            except Exception:
+                pass
+            if key.startswith("AIza"):
+                yield _call_gemini_avatar(key, image_bytes, mime_type)
+        else:
+            yield _call_gemini_avatar(key, image_bytes, mime_type)
+
+    try:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(lambda: list(_tries())[0])
+            traits = future.result(timeout=15.0)
+    except Exception:
+        traits = None
+
+    if not traits:
+        return {**AVATAR_DEFAULT_TRAITS, "success": True, "engine": "VivaLeve Local",
+                "message": "Nao consegui falar com a IA agora, mas o avatar 3D ja foi gerado com a sua foto."}
+
+    traits.setdefault("message", "✨ Avatar 3D gerado a partir da sua foto!")
+    return traits
+
 # ----------------- 3. ANALISADOR DE CARDÁPIO DE RESTAURANTES -----------------
 def _call_groq_menu(api_key: str, restaurant_name: str, menu_text: str, user_goal: str) -> Dict[str, Any]:
     prompt = f"""
